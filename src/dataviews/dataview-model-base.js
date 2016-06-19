@@ -243,6 +243,7 @@ module.exports = Model.extend({
       'sync_on_data_change',
       'sync_on_bbox_change',
       'enabled',
+      'table',
       'source'
     ]
   }

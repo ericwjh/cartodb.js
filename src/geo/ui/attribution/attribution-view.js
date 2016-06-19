@@ -3,7 +3,7 @@ var _ = require('underscore');
 var View = require('../../../core/view');
 var Model = require('../../../core/model');
 var template = require('./attribution-template.tpl');
-var Sanitize = require('../../../core/sanitize');
+// var Sanitize = require('../../../core/sanitize');
 
 /**
  *  Attribution overlay
@@ -35,7 +35,7 @@ var Attribution = View.extend({
     var isGMaps = this.map.get('provider') !== 'leaflet';
     this.$el.html(
       template({
-        attributions: Sanitize.html(attributions)
+        attributions: attributions//Sanitize.html(attributions)
       })
     );
     this.$el.toggleClass('CDB-Attribution--gmaps', !!isGMaps);

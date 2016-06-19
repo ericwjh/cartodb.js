@@ -1,498 +1,519 @@
 /* wax - 7.0.1 - v6.0.4-181-ga34788e */
 
 
-!function (name, context, definition) {
+! function(name, context, definition) {
   //if (typeof module !== 'undefined') module.exports = definition(name, context);
   //else if (typeof define === 'function' && typeof define.amd  === 'object') define(definition);
   //else context[name] = definition(name, context);
-  context[name] = definition(name, context);
-}('bean', this, function (name, context) {
-  var win = window
-    , old = context[name]
-    , overOut = /over|out/
-    , namespaceRegex = /[^\.]*(?=\..*)\.|.*/
-    , nameRegex = /\..*/
-    , addEvent = 'addEventListener'
-    , attachEvent = 'attachEvent'
-    , removeEvent = 'removeEventListener'
-    , detachEvent = 'detachEvent'
-    , doc = document || {}
-    , root = doc.documentElement || {}
-    , W3C_MODEL = root[addEvent]
-    , eventSupport = W3C_MODEL ? addEvent : attachEvent
-    , slice = Array.prototype.slice
-    , mouseTypeRegex = /click|mouse(?!(.*wheel|scroll))|menu|drag|drop/i
-    , mouseWheelTypeRegex = /mouse.*(wheel|scroll)/i
-    , textTypeRegex = /^text/i
-    , touchTypeRegex = /^touch|^gesture/i
-    , ONE = { one: 1 } // singleton for quick matching making add() do one()
+  global[name] = context[name] = definition(name, context);
+}('bean', this, function(name, context) {
+  var win = window,
+    old = context[name],
+    overOut = /over|out/,
+    namespaceRegex = /[^\.]*(?=\..*)\.|.*/,
+    nameRegex = /\..*/,
+    addEvent = 'addEventListener',
+    attachEvent = 'attachEvent',
+    removeEvent = 'removeEventListener',
+    detachEvent = 'detachEvent',
+    doc = document || {},
+    root = doc.documentElement || {},
+    W3C_MODEL = root[addEvent],
+    eventSupport = W3C_MODEL ? addEvent : attachEvent,
+    slice = Array.prototype.slice,
+    mouseTypeRegex = /click|mouse(?!(.*wheel|scroll))|menu|drag|drop/i,
+    mouseWheelTypeRegex = /mouse.*(wheel|scroll)/i,
+    textTypeRegex = /^text/i,
+    touchTypeRegex = /^touch|^gesture/i,
+    ONE = {
+      one: 1
+    } // singleton for quick matching making add() do one()
 
-    , nativeEvents = (function (hash, events, i) {
-        for (i = 0; i < events.length; i++)
-          hash[events[i]] = 1
-        return hash
-      })({}, (
-          'click dblclick mouseup mousedown contextmenu ' +                  // mouse buttons
-          'mousewheel mousemultiwheel DOMMouseScroll ' +                     // mouse wheel
-          'mouseover mouseout mousemove selectstart selectend ' +            // mouse movement
-          'keydown keypress keyup ' +                                        // keyboard
-          'orientationchange ' +                                             // mobile
-          'focus blur change reset select submit ' +                         // form elements
-          'load unload beforeunload resize move DOMContentLoaded readystatechange ' + // window
-          'error abort scroll ' +                                            // misc
-          (W3C_MODEL ? // element.fireEvent('onXYZ'... is not forgiving if we try to fire an event
-                       // that doesn't actually exist, so make sure we only do these on newer browsers
-            'show ' +                                                          // mouse buttons
-            'input invalid ' +                                                 // form elements
-            'touchstart touchmove touchend touchcancel ' +                     // touch
-            'gesturestart gesturechange gestureend ' +                         // gesture
-            'MSPointerUp MSPointerDown MSPointerCancel MSPointerMove ' +       // MS Pointer events
-            'MSPointerOver MSPointerOut ' +                                    // MS Pointer events
-            'pointerup pointerdown pointermove pointercancel' +                // MS Pointer events
-            'message readystatechange pageshow pagehide popstate ' +           // window
-            'hashchange offline online ' +                                     // window
-            'afterprint beforeprint ' +                                        // printing
-            'dragstart dragenter dragover dragleave drag drop dragend ' +      // dnd
-            'loadstart progress suspend emptied stalled loadmetadata ' +       // media
-            'loadeddata canplay canplaythrough playing waiting seeking ' +     // media
-            'seeked ended durationchange timeupdate play pause ratechange ' +  // media
-            'volumechange cuechange ' +                                        // media
-            'checking noupdate downloading cached updateready obsolete ' +     // appcache
-            '' : '')
-        ).split(' ')
-      )
+  , nativeEvents = (function(hash, events, i) {
+    for (i = 0; i < events.length; i++)
+      hash[events[i]] = 1
+    return hash
+  })({}, (
+    'click dblclick mouseup mousedown contextmenu ' + // mouse buttons
+    'mousewheel mousemultiwheel DOMMouseScroll ' + // mouse wheel
+    'mouseover mouseout mousemove selectstart selectend ' + // mouse movement
+    'keydown keypress keyup ' + // keyboard
+    'orientationchange ' + // mobile
+    'focus blur change reset select submit ' + // form elements
+    'load unload beforeunload resize move DOMContentLoaded readystatechange ' + // window
+    'error abort scroll ' + // misc
+    (W3C_MODEL ? // element.fireEvent('onXYZ'... is not forgiving if we try to fire an event
+      // that doesn't actually exist, so make sure we only do these on newer browsers
+      'show ' + // mouse buttons
+      'input invalid ' + // form elements
+      'touchstart touchmove touchend touchcancel ' + // touch
+      'gesturestart gesturechange gestureend ' + // gesture
+      'MSPointerUp MSPointerDown MSPointerCancel MSPointerMove ' + // MS Pointer events
+      'MSPointerOver MSPointerOut ' + // MS Pointer events
+      'pointerup pointerdown pointermove pointercancel' + // MS Pointer events
+      'message readystatechange pageshow pagehide popstate ' + // window
+      'hashchange offline online ' + // window
+      'afterprint beforeprint ' + // printing
+      'dragstart dragenter dragover dragleave drag drop dragend ' + // dnd
+      'loadstart progress suspend emptied stalled loadmetadata ' + // media
+      'loadeddata canplay canplaythrough playing waiting seeking ' + // media
+      'seeked ended durationchange timeupdate play pause ratechange ' + // media
+      'volumechange cuechange ' + // media
+      'checking noupdate downloading cached updateready obsolete ' + // appcache
+      '' : '')
+  ).split(' '))
 
-    , customEvents = (function () {
-        function isDescendant(parent, node) {
-          while ((node = node.parentNode) !== null) {
-            if (node === parent) return true
+  , customEvents = (function() {
+    function isDescendant(parent, node) {
+      while ((node = node.parentNode) !== null) {
+        if (node === parent) return true
+      }
+      return false
+    }
+
+    function check(event) {
+      var related = event.relatedTarget
+      if (!related) return related === null
+      return (related !== this && related.prefix !== 'xul' && !/document/.test(this.toString()) && !isDescendant(this, related))
+    }
+
+    return {
+      mouseenter: {
+        base: 'mouseover',
+        condition: check
+      },
+      mouseleave: {
+        base: 'mouseout',
+        condition: check
+      },
+      mousewheel: {
+        base: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel'
+      }
+    }
+  })()
+
+  , fixEvent = (function() {
+    var commonProps = 'altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey srcElement target timeStamp type view which'.split(' '),
+      mouseProps = commonProps.concat('button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' ')),
+      mouseWheelProps = mouseProps.concat('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ axis'.split(' ')) // 'axis' is FF specific
+      ,
+      keyProps = commonProps.concat('char charCode key keyCode keyIdentifier keyLocation'.split(' ')),
+      textProps = commonProps.concat(['data']),
+      touchProps = commonProps.concat('touches targetTouches changedTouches scale rotation'.split(' ')),
+      preventDefault = 'preventDefault',
+      createPreventDefault = function(event) {
+        return function() {
+          if (event[preventDefault])
+            event[preventDefault]()
+          else
+            event.returnValue = false
+        }
+      },
+      stopPropagation = 'stopPropagation',
+      createStopPropagation = function(event) {
+        return function() {
+          if (event[stopPropagation])
+            event[stopPropagation]()
+          else
+            event.cancelBubble = true
+        }
+      },
+      createStop = function(synEvent) {
+        return function() {
+          synEvent[preventDefault]()
+          synEvent[stopPropagation]()
+          synEvent.stopped = true
+        }
+      },
+      copyProps = function(event, result, props) {
+        var i, p
+        for (i = props.length; i--;) {
+          p = props[i]
+          if (!(p in result) && p in event) result[p] = event[p]
+        }
+      }
+
+    return function(event, isNative) {
+      var result = {
+        originalEvent: event,
+        isNative: isNative
+      }
+      if (!event)
+        return result
+
+      var props, type = event.type,
+        target = event.target || event.srcElement
+
+      result[preventDefault] = createPreventDefault(event)
+      result[stopPropagation] = createStopPropagation(event)
+      result.stop = createStop(result)
+      result.target = target && target.nodeType === 3 ? target.parentNode : target
+
+      if (isNative) { // we only need basic augmentation on custom events, the rest is too expensive
+        if (type.indexOf('key') !== -1) {
+          props = keyProps
+          result.keyCode = event.which || event.keyCode
+        } else if (mouseTypeRegex.test(type)) {
+          props = mouseProps
+          result.rightClick = event.which === 3 || event.button === 2
+          result.pos = {
+            x: 0,
+            y: 0
           }
+          if (event.pageX || event.pageY) {
+            result.clientX = event.pageX
+            result.clientY = event.pageY
+          } else if (event.clientX || event.clientY) {
+            result.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft
+            result.clientY = event.clientY + doc.body.scrollTop + root.scrollTop
+          }
+          if (overOut.test(type))
+            result.relatedTarget = event.relatedTarget || event[(type === 'mouseover' ? 'from' : 'to') + 'Element']
+        } else if (touchTypeRegex.test(type)) {
+          props = touchProps
+        } else if (mouseWheelTypeRegex.test(type)) {
+          props = mouseWheelProps
+        } else if (textTypeRegex.test(type)) {
+          props = textProps
+        }
+        copyProps(event, result, props || commonProps)
+      }
+      return result
+    }
+  })()
+
+  // if we're in old IE we can't do onpropertychange on doc or win so we use doc.documentElement for both
+  , targetElement = function(element, isNative) {
+    return !W3C_MODEL && !isNative && (element === doc || element === win) ? root : element
+  }
+
+  // we use one of these per listener, of any type
+  , RegEntry = (function() {
+    function entry(element, type, handler, original, namespaces) {
+      this.element = element
+      this.type = type
+      this.handler = handler
+      this.original = original
+      this.namespaces = namespaces
+      this.custom = customEvents[type]
+      this.isNative = nativeEvents[type] && element[eventSupport]
+      this.eventType = W3C_MODEL || this.isNative ? type : 'propertychange'
+      this.customType = !W3C_MODEL && !this.isNative && type
+      this.target = targetElement(element, this.isNative)
+      this.eventSupport = this.target[eventSupport]
+    }
+
+    entry.prototype = {
+      // given a list of namespaces, is our entry in any of them?
+      inNamespaces: function(checkNamespaces) {
+        var i, j
+        if (!checkNamespaces)
+          return true
+        if (!this.namespaces)
           return false
-        }
-
-        function check(event) {
-          var related = event.relatedTarget
-          if (!related) return related === null
-          return (related !== this && related.prefix !== 'xul' && !/document/.test(this.toString()) && !isDescendant(this, related))
-        }
-
-        return {
-            mouseenter: { base: 'mouseover', condition: check }
-          , mouseleave: { base: 'mouseout', condition: check }
-          , mousewheel: { base: /Firefox/.test(navigator.userAgent) ? 'DOMMouseScroll' : 'mousewheel' }
-        }
-      })()
-
-    , fixEvent = (function () {
-        var commonProps = 'altKey attrChange attrName bubbles cancelable ctrlKey currentTarget detail eventPhase getModifierState isTrusted metaKey relatedNode relatedTarget shiftKey srcElement target timeStamp type view which'.split(' ')
-          , mouseProps = commonProps.concat('button buttons clientX clientY dataTransfer fromElement offsetX offsetY pageX pageY screenX screenY toElement'.split(' '))
-          , mouseWheelProps = mouseProps.concat('wheelDelta wheelDeltaX wheelDeltaY wheelDeltaZ axis'.split(' ')) // 'axis' is FF specific
-          , keyProps = commonProps.concat('char charCode key keyCode keyIdentifier keyLocation'.split(' '))
-          , textProps = commonProps.concat(['data'])
-          , touchProps = commonProps.concat('touches targetTouches changedTouches scale rotation'.split(' '))
-          , preventDefault = 'preventDefault'
-          , createPreventDefault = function (event) {
-              return function () {
-                if (event[preventDefault])
-                  event[preventDefault]()
-                else
-                  event.returnValue = false
-              }
-            }
-          , stopPropagation = 'stopPropagation'
-          , createStopPropagation = function (event) {
-              return function () {
-                if (event[stopPropagation])
-                  event[stopPropagation]()
-                else
-                  event.cancelBubble = true
-              }
-            }
-          , createStop = function (synEvent) {
-              return function () {
-                synEvent[preventDefault]()
-                synEvent[stopPropagation]()
-                synEvent.stopped = true
-              }
-            }
-          , copyProps = function (event, result, props) {
-              var i, p
-              for (i = props.length; i--;) {
-                p = props[i]
-                if (!(p in result) && p in event) result[p] = event[p]
-              }
-            }
-
-        return function (event, isNative) {
-          var result = { originalEvent: event, isNative: isNative }
-          if (!event)
-            return result
-
-          var props
-            , type = event.type
-            , target = event.target || event.srcElement
-
-          result[preventDefault] = createPreventDefault(event)
-          result[stopPropagation] = createStopPropagation(event)
-          result.stop = createStop(result)
-          result.target = target && target.nodeType === 3 ? target.parentNode : target
-
-          if (isNative) { // we only need basic augmentation on custom events, the rest is too expensive
-            if (type.indexOf('key') !== -1) {
-              props = keyProps
-              result.keyCode = event.which || event.keyCode
-            } else if (mouseTypeRegex.test(type)) {
-              props = mouseProps
-              result.rightClick = event.which === 3 || event.button === 2
-              result.pos = { x: 0, y: 0 }
-              if (event.pageX || event.pageY) {
-                result.clientX = event.pageX
-                result.clientY = event.pageY
-              } else if (event.clientX || event.clientY) {
-                result.clientX = event.clientX + doc.body.scrollLeft + root.scrollLeft
-                result.clientY = event.clientY + doc.body.scrollTop + root.scrollTop
-              }
-              if (overOut.test(type))
-                result.relatedTarget = event.relatedTarget || event[(type === 'mouseover' ? 'from' : 'to') + 'Element']
-            } else if (touchTypeRegex.test(type)) {
-              props = touchProps
-            } else if (mouseWheelTypeRegex.test(type)) {
-              props = mouseWheelProps
-            } else if (textTypeRegex.test(type)) {
-              props = textProps
-            }
-            copyProps(event, result, props || commonProps)
+        for (i = checkNamespaces.length; i--;) {
+          for (j = this.namespaces.length; j--;) {
+            if (checkNamespaces[i] === this.namespaces[j])
+              return true
           }
-          return result
         }
-      })()
-
-      // if we're in old IE we can't do onpropertychange on doc or win so we use doc.documentElement for both
-    , targetElement = function (element, isNative) {
-        return !W3C_MODEL && !isNative && (element === doc || element === win) ? root : element
+        return false
       }
 
-      // we use one of these per listener, of any type
-    , RegEntry = (function () {
-        function entry(element, type, handler, original, namespaces) {
-          this.element = element
-          this.type = type
-          this.handler = handler
-          this.original = original
-          this.namespaces = namespaces
-          this.custom = customEvents[type]
-          this.isNative = nativeEvents[type] && element[eventSupport]
-          this.eventType = W3C_MODEL || this.isNative ? type : 'propertychange'
-          this.customType = !W3C_MODEL && !this.isNative && type
-          this.target = targetElement(element, this.isNative)
-          this.eventSupport = this.target[eventSupport]
-        }
-
-        entry.prototype = {
-            // given a list of namespaces, is our entry in any of them?
-            inNamespaces: function (checkNamespaces) {
-              var i, j
-              if (!checkNamespaces)
-                return true
-              if (!this.namespaces)
-                return false
-              for (i = checkNamespaces.length; i--;) {
-                for (j = this.namespaces.length; j--;) {
-                  if (checkNamespaces[i] === this.namespaces[j])
-                    return true
-                }
-              }
-              return false
-            }
-
-            // match by element, original fn (opt), handler fn (opt)
-          , matches: function (checkElement, checkOriginal, checkHandler) {
-              return this.element === checkElement &&
-                (!checkOriginal || this.original === checkOriginal) &&
-                (!checkHandler || this.handler === checkHandler)
-            }
-        }
-
-        return entry
-      })()
-
-    , registry = (function () {
-        // our map stores arrays by event type, just because it's better than storing
-        // everything in a single array. uses '$' as a prefix for the keys for safety
-        var map = {}
-
-          // generic functional search of our registry for matching listeners,
-          // `fn` returns false to break out of the loop
-          , forAll = function (element, type, original, handler, fn) {
-              if (!type || type === '*') {
-                // search the whole registry
-                for (var t in map) {
-                  if (t.charAt(0) === '$')
-                    forAll(element, t.substr(1), original, handler, fn)
-                }
-              } else {
-                var i = 0, l, list = map['$' + type], all = element === '*'
-                if (!list)
-                  return
-                for (l = list.length; i < l; i++) {
-                  if (all || list[i].matches(element, original, handler))
-                    if (!fn(list[i], list, i, type))
-                      return
-                }
-              }
-            }
-
-          , has = function (element, type, original) {
-              // we're not using forAll here simply because it's a bit slower and this
-              // needs to be fast
-              var i, list = map['$' + type]
-              if (list) {
-                for (i = list.length; i--;) {
-                  if (list[i].matches(element, original, null))
-                    return true
-                }
-              }
-              return false
-            }
-
-          , get = function (element, type, original) {
-              var entries = []
-              forAll(element, type, original, null, function (entry) { return entries.push(entry) })
-              return entries
-            }
-
-          , put = function (entry) {
-              (map['$' + entry.type] || (map['$' + entry.type] = [])).push(entry)
-              return entry
-            }
-
-          , del = function (entry) {
-              forAll(entry.element, entry.type, null, entry.handler, function (entry, list, i) {
-                list.splice(i, 1)
-                if (list.length === 0)
-                  delete map['$' + entry.type]
-                return false
-              })
-            }
-
-            // dump all entries, used for onunload
-          , entries = function () {
-              var t, entries = []
-              for (t in map) {
-                if (t.charAt(0) === '$')
-                  entries = entries.concat(map[t])
-              }
-              return entries
-            }
-
-        return { has: has, get: get, put: put, del: del, entries: entries }
-      })()
-
-      // add and remove listeners to DOM elements
-    , listener = W3C_MODEL ? function (element, type, fn, add) {
-        element[add ? addEvent : removeEvent](type, fn, false)
-      } : function (element, type, fn, add, custom) {
-        if (custom && add && element['_on' + custom] === null)
-          element['_on' + custom] = 0
-        element[add ? attachEvent : detachEvent]('on' + type, fn)
+      // match by element, original fn (opt), handler fn (opt)
+      ,
+      matches: function(checkElement, checkOriginal, checkHandler) {
+        return this.element === checkElement &&
+          (!checkOriginal || this.original === checkOriginal) &&
+          (!checkHandler || this.handler === checkHandler)
       }
+    }
 
-    , nativeHandler = function (element, fn, args) {
-        return function (event) {
-          event = fixEvent(event || ((this.ownerDocument || this.document || this).parentWindow || win).event, true)
-          return fn.apply(element, [event].concat(args))
+    return entry
+  })()
+
+  , registry = (function() {
+    // our map stores arrays by event type, just because it's better than storing
+    // everything in a single array. uses '$' as a prefix for the keys for safety
+    var map = {}
+
+    // generic functional search of our registry for matching listeners,
+    // `fn` returns false to break out of the loop
+    , forAll = function(element, type, original, handler, fn) {
+      if (!type || type === '*') {
+        // search the whole registry
+        for (var t in map) {
+          if (t.charAt(0) === '$')
+            forAll(element, t.substr(1), original, handler, fn)
+        }
+      } else {
+        var i = 0,
+          l, list = map['$' + type],
+          all = element === '*'
+        if (!list)
+          return
+        for (l = list.length; i < l; i++) {
+          if (all || list[i].matches(element, original, handler))
+            if (!fn(list[i], list, i, type))
+              return
         }
       }
+    }
 
-    , customHandler = function (element, fn, type, condition, args, isNative) {
-        return function (event) {
-          if (condition ? condition.apply(this, arguments) : W3C_MODEL ? true : event && event.propertyName === '_on' + type || !event) {
-            if (event)
-              event = fixEvent(event || ((this.ownerDocument || this.document || this).parentWindow || win).event, isNative)
-            fn.apply(element, event && (!args || args.length === 0) ? arguments : slice.call(arguments, event ? 0 : 1).concat(args))
+    , has = function(element, type, original) {
+      // we're not using forAll here simply because it's a bit slower and this
+      // needs to be fast
+      var i, list = map['$' + type]
+      if (list) {
+        for (i = list.length; i--;) {
+          if (list[i].matches(element, original, null))
+            return true
+        }
+      }
+      return false
+    }
+
+    , get = function(element, type, original) {
+      var entries = []
+      forAll(element, type, original, null, function(entry) {
+        return entries.push(entry)
+      })
+      return entries
+    }
+
+    , put = function(entry) {
+      (map['$' + entry.type] || (map['$' + entry.type] = [])).push(entry)
+      return entry
+    }
+
+    , del = function(entry) {
+      forAll(entry.element, entry.type, null, entry.handler, function(entry, list, i) {
+        list.splice(i, 1)
+        if (list.length === 0)
+          delete map['$' + entry.type]
+        return false
+      })
+    }
+
+    // dump all entries, used for onunload
+    , entries = function() {
+      var t, entries = []
+      for (t in map) {
+        if (t.charAt(0) === '$')
+          entries = entries.concat(map[t])
+      }
+      return entries
+    }
+
+    return {
+      has: has,
+      get: get,
+      put: put,
+      del: del,
+      entries: entries
+    }
+  })()
+
+  // add and remove listeners to DOM elements
+  , listener = W3C_MODEL ? function(element, type, fn, add) {
+    element[add ? addEvent : removeEvent](type, fn, false)
+  } : function(element, type, fn, add, custom) {
+    if (custom && add && element['_on' + custom] === null)
+      element['_on' + custom] = 0
+    element[add ? attachEvent : detachEvent]('on' + type, fn)
+  }
+
+  , nativeHandler = function(element, fn, args) {
+    return function(event) {
+      event = fixEvent(event || ((this.ownerDocument || this.document || this).parentWindow || win).event, true)
+      return fn.apply(element, [event].concat(args))
+    }
+  }
+
+  , customHandler = function(element, fn, type, condition, args, isNative) {
+    return function(event) {
+      if (condition ? condition.apply(this, arguments) : W3C_MODEL ? true : event && event.propertyName === '_on' + type || !event) {
+        if (event)
+          event = fixEvent(event || ((this.ownerDocument || this.document || this).parentWindow || win).event, isNative)
+        fn.apply(element, event && (!args || args.length === 0) ? arguments : slice.call(arguments, event ? 0 : 1).concat(args))
+      }
+    }
+  }
+
+  , once = function(rm, element, type, fn, originalFn) {
+    // wrap the handler in a handler that does a remove as well
+    return function() {
+      rm(element, type, originalFn)
+      fn.apply(this, arguments)
+    }
+  }
+
+  , removeListener = function(element, orgType, handler, namespaces) {
+    var i, l, entry, type = (orgType && orgType.replace(nameRegex, '')),
+      handlers = registry.get(element, type, handler)
+
+    for (i = 0, l = handlers.length; i < l; i++) {
+      if (handlers[i].inNamespaces(namespaces)) {
+        if ((entry = handlers[i]).eventSupport)
+          listener(entry.target, entry.eventType, entry.handler, false, entry.type)
+          // TODO: this is problematic, we have a registry.get() and registry.del() that
+          // both do registry searches so we waste cycles doing this. Needs to be rolled into
+          // a single registry.forAll(fn) that removes while finding, but the catch is that
+          // we'll be splicing the arrays that we're iterating over. Needs extra tests to
+          // make sure we don't screw it up. @rvagg
+        registry.del(entry)
+      }
+    }
+  }
+
+  , addListener = function(element, orgType, fn, originalFn, args) {
+    var entry, type = orgType.replace(nameRegex, ''),
+      namespaces = orgType.replace(namespaceRegex, '').split('.')
+
+    if (registry.has(element, type, fn))
+      return element // no dupe
+    if (type === 'unload')
+      fn = once(removeListener, element, type, fn, originalFn) // self clean-up
+    if (customEvents[type]) {
+      if (customEvents[type].condition)
+        fn = customHandler(element, fn, type, customEvents[type].condition, true)
+      type = customEvents[type].base || type
+    }
+    entry = registry.put(new RegEntry(element, type, fn, originalFn, namespaces[0] && namespaces))
+    entry.handler = entry.isNative ?
+      nativeHandler(element, entry.handler, args) :
+      customHandler(element, entry.handler, type, false, args, false)
+    if (entry.eventSupport)
+      listener(entry.target, entry.eventType, entry.handler, true, entry.customType)
+  }
+
+  , del = function(selector, fn, $) {
+    return function(e) {
+      var target, i, array = typeof selector === 'string' ? $(selector, this) : selector
+      for (target = e.target; target && target !== this; target = target.parentNode) {
+        for (i = array.length; i--;) {
+          if (array[i] === target) {
+            return fn.apply(target, arguments)
           }
         }
       }
+    }
+  }
 
-    , once = function (rm, element, type, fn, originalFn) {
-        // wrap the handler in a handler that does a remove as well
-        return function () {
-          rm(element, type, originalFn)
-          fn.apply(this, arguments)
+  , remove = function(element, typeSpec, fn) {
+    var k, m, type, namespaces, i, rm = removeListener,
+      isString = typeSpec && typeof typeSpec === 'string'
+
+    if (isString && typeSpec.indexOf(' ') > 0) {
+      // remove(el, 't1 t2 t3', fn) or remove(el, 't1 t2 t3')
+      typeSpec = typeSpec.split(' ')
+      for (i = typeSpec.length; i--;)
+        remove(element, typeSpec[i], fn)
+      return element
+    }
+    type = isString && typeSpec.replace(nameRegex, '')
+    if (type && customEvents[type])
+      type = customEvents[type].type
+    if (!typeSpec || isString) {
+      // remove(el) or remove(el, t1.ns) or remove(el, .ns) or remove(el, .ns1.ns2.ns3)
+      if (namespaces = isString && typeSpec.replace(namespaceRegex, ''))
+        namespaces = namespaces.split('.')
+      rm(element, type, fn, namespaces)
+    } else if (typeof typeSpec === 'function') {
+      // remove(el, fn)
+      rm(element, null, typeSpec)
+    } else {
+      // remove(el, { t1: fn1, t2, fn2 })
+      for (k in typeSpec) {
+        if (typeSpec.hasOwnProperty(k))
+          remove(element, k, typeSpec[k])
+      }
+    }
+    return element
+  }
+
+  , add = function(element, events, fn, delfn, $) {
+    var type, types, i, args, originalFn = fn,
+      isDel = fn && typeof fn === 'string'
+
+    if (events && !fn && typeof events === 'object') {
+      for (type in events) {
+        if (events.hasOwnProperty(type))
+          add.apply(this, [element, type, events[type]])
+      }
+    } else {
+      args = arguments.length > 3 ? slice.call(arguments, 3) : []
+      types = (isDel ? fn : events).split(' ')
+      isDel && (fn = del(events, (originalFn = delfn), $)) && (args = slice.call(args, 1))
+        // special case for one()
+      this === ONE && (fn = once(remove, element, events, fn, originalFn))
+      for (i = types.length; i--;) addListener(element, types[i], fn, originalFn, args)
+    }
+    return element
+  }
+
+  , one = function() {
+    return add.apply(ONE, arguments)
+  }
+
+  , fireListener = W3C_MODEL ? function(isNative, type, element) {
+    var evt = doc.createEvent(isNative ? 'HTMLEvents' : 'UIEvents')
+    evt[isNative ? 'initEvent' : 'initUIEvent'](type, true, true, win, 1)
+    element.dispatchEvent(evt)
+  } : function(isNative, type, element) {
+    element = targetElement(element, isNative)
+      // if not-native then we're using onpropertychange so we just increment a custom property
+    isNative ? element.fireEvent('on' + type, doc.createEventObject()) : element['_on' + type]++
+  }
+
+  , fire = function(element, type, args) {
+    var i, j, l, names, handlers, types = type.split(' ')
+
+    for (i = types.length; i--;) {
+      type = types[i].replace(nameRegex, '')
+      if (names = types[i].replace(namespaceRegex, ''))
+        names = names.split('.')
+      if (!names && !args && element[eventSupport]) {
+        fireListener(nativeEvents[type], type, element)
+      } else {
+        // non-native event, either because of a namespace, arguments or a non DOM element
+        // iterate over all listeners and manually 'fire'
+        handlers = registry.get(element, type)
+        args = [false].concat(args)
+        for (j = 0, l = handlers.length; j < l; j++) {
+          if (handlers[j].inNamespaces(names))
+            handlers[j].handler.apply(element, args)
         }
       }
+    }
+    return element
+  }
 
-    , removeListener = function (element, orgType, handler, namespaces) {
-        var i, l, entry
-          , type = (orgType && orgType.replace(nameRegex, ''))
-          , handlers = registry.get(element, type, handler)
+  , clone = function(element, from, type) {
+    var i = 0,
+      handlers = registry.get(from, type),
+      l = handlers.length
 
-        for (i = 0, l = handlers.length; i < l; i++) {
-          if (handlers[i].inNamespaces(namespaces)) {
-            if ((entry = handlers[i]).eventSupport)
-              listener(entry.target, entry.eventType, entry.handler, false, entry.type)
-            // TODO: this is problematic, we have a registry.get() and registry.del() that
-            // both do registry searches so we waste cycles doing this. Needs to be rolled into
-            // a single registry.forAll(fn) that removes while finding, but the catch is that
-            // we'll be splicing the arrays that we're iterating over. Needs extra tests to
-            // make sure we don't screw it up. @rvagg
-            registry.del(entry)
-          }
-        }
-      }
+    for (; i < l; i++)
+      handlers[i].original && add(element, handlers[i].type, handlers[i].original)
+    return element
+  }
 
-    , addListener = function (element, orgType, fn, originalFn, args) {
-        var entry
-          , type = orgType.replace(nameRegex, '')
-          , namespaces = orgType.replace(namespaceRegex, '').split('.')
-
-        if (registry.has(element, type, fn))
-          return element // no dupe
-        if (type === 'unload')
-          fn = once(removeListener, element, type, fn, originalFn) // self clean-up
-        if (customEvents[type]) {
-          if (customEvents[type].condition)
-            fn = customHandler(element, fn, type, customEvents[type].condition, true)
-          type = customEvents[type].base || type
-        }
-        entry = registry.put(new RegEntry(element, type, fn, originalFn, namespaces[0] && namespaces))
-        entry.handler = entry.isNative ?
-          nativeHandler(element, entry.handler, args) :
-          customHandler(element, entry.handler, type, false, args, false)
-        if (entry.eventSupport)
-          listener(entry.target, entry.eventType, entry.handler, true, entry.customType)
-      }
-
-    , del = function (selector, fn, $) {
-        return function (e) {
-          var target, i, array = typeof selector === 'string' ? $(selector, this) : selector
-          for (target = e.target; target && target !== this; target = target.parentNode) {
-            for (i = array.length; i--;) {
-              if (array[i] === target) {
-                return fn.apply(target, arguments)
-              }
-            }
-          }
-        }
-      }
-
-    , remove = function (element, typeSpec, fn) {
-        var k, m, type, namespaces, i
-          , rm = removeListener
-          , isString = typeSpec && typeof typeSpec === 'string'
-
-        if (isString && typeSpec.indexOf(' ') > 0) {
-          // remove(el, 't1 t2 t3', fn) or remove(el, 't1 t2 t3')
-          typeSpec = typeSpec.split(' ')
-          for (i = typeSpec.length; i--;)
-            remove(element, typeSpec[i], fn)
-          return element
-        }
-        type = isString && typeSpec.replace(nameRegex, '')
-        if (type && customEvents[type])
-          type = customEvents[type].type
-        if (!typeSpec || isString) {
-          // remove(el) or remove(el, t1.ns) or remove(el, .ns) or remove(el, .ns1.ns2.ns3)
-          if (namespaces = isString && typeSpec.replace(namespaceRegex, ''))
-            namespaces = namespaces.split('.')
-          rm(element, type, fn, namespaces)
-        } else if (typeof typeSpec === 'function') {
-          // remove(el, fn)
-          rm(element, null, typeSpec)
-        } else {
-          // remove(el, { t1: fn1, t2, fn2 })
-          for (k in typeSpec) {
-            if (typeSpec.hasOwnProperty(k))
-              remove(element, k, typeSpec[k])
-          }
-        }
-        return element
-      }
-
-    , add = function (element, events, fn, delfn, $) {
-        var type, types, i, args
-          , originalFn = fn
-          , isDel = fn && typeof fn === 'string'
-
-        if (events && !fn && typeof events === 'object') {
-          for (type in events) {
-            if (events.hasOwnProperty(type))
-              add.apply(this, [ element, type, events[type] ])
-          }
-        } else {
-          args = arguments.length > 3 ? slice.call(arguments, 3) : []
-          types = (isDel ? fn : events).split(' ')
-          isDel && (fn = del(events, (originalFn = delfn), $)) && (args = slice.call(args, 1))
-          // special case for one()
-          this === ONE && (fn = once(remove, element, events, fn, originalFn))
-          for (i = types.length; i--;) addListener(element, types[i], fn, originalFn, args)
-        }
-        return element
-      }
-
-    , one = function () {
-        return add.apply(ONE, arguments)
-      }
-
-    , fireListener = W3C_MODEL ? function (isNative, type, element) {
-        var evt = doc.createEvent(isNative ? 'HTMLEvents' : 'UIEvents')
-        evt[isNative ? 'initEvent' : 'initUIEvent'](type, true, true, win, 1)
-        element.dispatchEvent(evt)
-      } : function (isNative, type, element) {
-        element = targetElement(element, isNative)
-        // if not-native then we're using onpropertychange so we just increment a custom property
-        isNative ? element.fireEvent('on' + type, doc.createEventObject()) : element['_on' + type]++
-      }
-
-    , fire = function (element, type, args) {
-        var i, j, l, names, handlers
-          , types = type.split(' ')
-
-        for (i = types.length; i--;) {
-          type = types[i].replace(nameRegex, '')
-          if (names = types[i].replace(namespaceRegex, ''))
-            names = names.split('.')
-          if (!names && !args && element[eventSupport]) {
-            fireListener(nativeEvents[type], type, element)
-          } else {
-            // non-native event, either because of a namespace, arguments or a non DOM element
-            // iterate over all listeners and manually 'fire'
-            handlers = registry.get(element, type)
-            args = [false].concat(args)
-            for (j = 0, l = handlers.length; j < l; j++) {
-              if (handlers[j].inNamespaces(names))
-                handlers[j].handler.apply(element, args)
-            }
-          }
-        }
-        return element
-      }
-
-    , clone = function (element, from, type) {
-        var i = 0
-          , handlers = registry.get(from, type)
-          , l = handlers.length
-
-        for (;i < l; i++)
-          handlers[i].original && add(element, handlers[i].type, handlers[i].original)
-        return element
-      }
-
-    , bean = {
-          add: add
-        , one: one
-        , remove: remove
-        , clone: clone
-        , fire: fire
-        , noConflict: function () {
-            context[name] = old
-            return this
-          }
-      }
+  , bean = {
+    add: add,
+    one: one,
+    remove: remove,
+    clone: clone,
+    fire: fire,
+    noConflict: function() {
+      context[name] = old
+      return this
+    }
+  }
 
   if (win[attachEvent]) {
     // for IE, clean up on unload to avoid leaks
-    var cleanup = function () {
+    var cleanup = function() {
       var i, entries = registry.entries()
       for (i in entries) {
         if (entries[i].type && entries[i].type !== 'unload')
@@ -928,11 +949,13 @@ html4.LOADERTYPES = {
 /**
  * @namespace
  */
-var html = (function (html4) {
+var html = (function(html4) {
   var lcase;
   // The below may not be true on browsers in the Turkish locale.
   if ('script' === 'SCRIPT'.toLowerCase()) {
-    lcase = function (s) { return s.toLowerCase(); };
+    lcase = function(s) {
+      return s.toLowerCase();
+    };
   } else {
     /**
      * {@updoc
@@ -942,24 +965,24 @@ var html = (function (html4) {
      * # 'script'
      * }
      */
-    lcase = function (s) {
+    lcase = function(s) {
       return s.replace(
-          /[A-Z]/g,
-          function (ch) {
-            return String.fromCharCode(ch.charCodeAt(0) | 32);
-          });
+        /[A-Z]/g,
+        function(ch) {
+          return String.fromCharCode(ch.charCodeAt(0) | 32);
+        });
     };
   }
 
   var ENTITIES = {
-    lt   : '<',
-    gt   : '>',
-    amp  : '&',
-    nbsp : '\240',
-    quot : '"',
-    apos : '\''
+    lt: '<',
+    gt: '>',
+    amp: '&',
+    nbsp: '\240',
+    quot: '"',
+    apos: '\''
   };
-  
+
   // Schemes on which to defer to uripolicy. Urls with other schemes are denied
   var WHITELISTED_SCHEMES = /^(?:https?|mailto|data)$/i;
 
@@ -1001,8 +1024,10 @@ var html = (function (html4) {
    * @return a single unicode code-point as a string.
    */
   function lookupEntity(name) {
-    name = lcase(name);  // TODO: &pi; is different from &Pi;
-    if (ENTITIES.hasOwnProperty(name)) { return ENTITIES[name]; }
+    name = lcase(name); // TODO: &pi; is different from &Pi;
+    if (ENTITIES.hasOwnProperty(name)) {
+      return ENTITIES[name];
+    }
     var m = name.match(decimalEscapeRe);
     if (m) {
       return String.fromCharCode(parseInt(m[1], 10));
@@ -1017,6 +1042,7 @@ var html = (function (html4) {
   }
 
   var nulRe = /\0/g;
+
   function stripNULs(s) {
     return s.replace(nulRe, '');
   }
@@ -1052,7 +1078,7 @@ var html = (function (html4) {
   var ltRe = /</g;
   var gtRe = />/g;
   var quotRe = /\"/g;
-  var eqRe = /\=/g;  // Backslash required on JScript.net
+  var eqRe = /\=/g; // Backslash required on JScript.net
 
   /**
    * Escapes HTML special characters in attribute values as HTML entities.
@@ -1069,7 +1095,7 @@ var html = (function (html4) {
   function escapeAttrib(s) {
     // Escaping '=' defangs many UTF-7 and SGML short-tag attacks.
     return s.replace(ampRe, '&amp;').replace(ltRe, '&lt;').replace(gtRe, '&gt;')
-        .replace(quotRe, '&#34;').replace(eqRe, '&#61;');
+      .replace(quotRe, '&#34;').replace(eqRe, '&#61;');
   }
 
   /**
@@ -1081,9 +1107,9 @@ var html = (function (html4) {
    */
   function normalizeRCData(rcdata) {
     return rcdata
-        .replace(looseAmpRe, '&amp;$1')
-        .replace(ltRe, '&lt;')
-        .replace(gtRe, '&gt;');
+      .replace(looseAmpRe, '&amp;$1')
+      .replace(ltRe, '&lt;')
+      .replace(gtRe, '&gt;');
   }
 
 
@@ -1095,53 +1121,48 @@ var html = (function (html4) {
 
   /** token definitions. */
   var INSIDE_TAG_TOKEN = new RegExp(
-      // Don't capture space.
-      '^\\s*(?:'
-      // Capture an attribute name in group 1, and value in group 3.
-      // We capture the fact that there was an attribute in group 2, since
-      // interpreters are inconsistent in whether a group that matches nothing
-      // is null, undefined, or the empty string.
-      + ('(?:'
-         + '([a-z][a-z-]*)'                    // attribute name
-         + ('('                                // optionally followed
-            + '\\s*=\\s*'
-            + ('('
-               // A double quoted string.
-               + '\"[^\"]*\"'
-               // A single quoted string.
-               + '|\'[^\']*\''
-               // The positive lookahead is used to make sure that in
-               // <foo bar= baz=boo>, the value for bar is blank, not "baz=boo".
-               + '|(?=[a-z][a-z-]*\\s*=)'
-               // An unquoted value that is not an attribute name.
-               // We know it is not an attribute name because the previous
-               // zero-width match would've eliminated that possibility.
-               + '|[^>\"\'\\s]*'
-               + ')'
-               )
-            + ')'
-            ) + '?'
-         + ')'
-         )
-      // End of tag captured in group 3.
-      + '|(\/?>)'
-      // Don't capture cruft
-      + '|[\\s\\S][^a-z\\s>]*)',
-      'i');
+    // Don't capture space.
+    '^\\s*(?:'
+    // Capture an attribute name in group 1, and value in group 3.
+    // We capture the fact that there was an attribute in group 2, since
+    // interpreters are inconsistent in whether a group that matches nothing
+    // is null, undefined, or the empty string.
+    + ('(?:' + '([a-z][a-z-]*)' // attribute name
+      + ('(' // optionally followed
+        + '\\s*=\\s*' + ('('
+          // A double quoted string.
+          + '\"[^\"]*\"'
+          // A single quoted string.
+          + '|\'[^\']*\''
+          // The positive lookahead is used to make sure that in
+          // <foo bar= baz=boo>, the value for bar is blank, not "baz=boo".
+          + '|(?=[a-z][a-z-]*\\s*=)'
+          // An unquoted value that is not an attribute name.
+          // We know it is not an attribute name because the previous
+          // zero-width match would've eliminated that possibility.
+          + '|[^>\"\'\\s]*' + ')'
+        ) + ')'
+      ) + '?' + ')'
+    )
+    // End of tag captured in group 3.
+    + '|(\/?>)'
+    // Don't capture cruft
+    + '|[\\s\\S][^a-z\\s>]*)',
+    'i');
 
   var OUTSIDE_TAG_TOKEN = new RegExp(
-      '^(?:'
-      // Entity captured in group 1.
-      + '&(\\#[0-9]+|\\#[x][0-9a-f]+|\\w+);'
-      // Comment, doctypes, and processing instructions not captured.
-      + '|<\!--[\\s\\S]*?--\>|<!\\w[^>]*>|<\\?[^>*]*>'
-      // '/' captured in group 2 for close tags, and name captured in group 3.
-      + '|<(\/)?([a-z][a-z0-9]*)'
-      // Text captured in group 4.
-      + '|([^<&>]+)'
-      // Cruft captured in group 5.
-      + '|([<&>]))',
-      'i');
+    '^(?:'
+    // Entity captured in group 1.
+    + '&(\\#[0-9]+|\\#[x][0-9a-f]+|\\w+);'
+    // Comment, doctypes, and processing instructions not captured.
+    + '|<\!--[\\s\\S]*?--\>|<!\\w[^>]*>|<\\?[^>*]*>'
+    // '/' captured in group 2 for close tags, and name captured in group 3.
+    + '|<(\/)?([a-z][a-z0-9]*)'
+    // Text captured in group 4.
+    + '|([^<&>]+)'
+    // Cruft captured in group 5.
+    + '|([<&>]))',
+    'i');
 
   /**
    * Given a SAX-like event handler, produce a function that feeds those
@@ -1171,13 +1192,15 @@ var html = (function (html4) {
       htmlText = String(htmlText);
       var htmlLower = null;
 
-      var inTag = false;  // True iff we're currently processing a tag.
-      var attribs = [];  // Accumulates attribute names and values.
-      var tagName = void 0;  // The name of the tag currently being processed.
-      var eflags = void 0;  // The element flags for the current tag.
-      var openTag = void 0;  // True if the current tag is an open tag.
+      var inTag = false; // True iff we're currently processing a tag.
+      var attribs = []; // Accumulates attribute names and values.
+      var tagName = void 0; // The name of the tag currently being processed.
+      var eflags = void 0; // The element flags for the current tag.
+      var openTag = void 0; // True if the current tag is an open tag.
 
-      if (handler.startDoc) { handler.startDoc(param); }
+      if (handler.startDoc) {
+        handler.startDoc(param);
+      }
 
       while (htmlText) {
         var m = htmlText.match(inTag ? INSIDE_TAG_TOKEN : OUTSIDE_TAG_TOKEN);
@@ -1190,10 +1213,11 @@ var html = (function (html4) {
             var decodedValue;
             if (m[2]) {
               var encodedValue = m[3];
-              switch (encodedValue.charCodeAt(0)) {  // Strip quotes
-                case 34: case 39:
+              switch (encodedValue.charCodeAt(0)) { // Strip quotes
+                case 34:
+                case 39:
                   encodedValue = encodedValue.substring(
-                      1, encodedValue.length - 1);
+                    1, encodedValue.length - 1);
                   break;
               }
               decodedValue = unescapeEntities(stripNULs(encodedValue));
@@ -1205,7 +1229,7 @@ var html = (function (html4) {
             }
             attribs.push(attribName, decodedValue);
           } else if (m[4]) {
-            if (eflags !== void 0) {  // False if not in whitelist.
+            if (eflags !== void 0) { // False if not in whitelist.
               if (openTag) {
                 if (handler.startTag) {
                   handler.startTag(tagName, attribs, param);
@@ -1217,16 +1241,17 @@ var html = (function (html4) {
               }
             }
 
-            if (openTag
-                && (eflags & (html4.eflags.CDATA | html4.eflags.RCDATA))) {
+            if (openTag && (eflags & (html4.eflags.CDATA | html4.eflags.RCDATA))) {
               if (htmlLower === null) {
                 htmlLower = lcase(htmlText);
               } else {
                 htmlLower = htmlLower.substring(
-                    htmlLower.length - htmlText.length);
+                  htmlLower.length - htmlText.length);
               }
               var dataEnd = htmlLower.indexOf('</' + tagName);
-              if (dataEnd < 0) { dataEnd = htmlText.length; }
+              if (dataEnd < 0) {
+                dataEnd = htmlText.length;
+              }
               if (dataEnd) {
                 if (eflags & html4.eflags.CDATA) {
                   if (handler.cdata) {
@@ -1245,28 +1270,33 @@ var html = (function (html4) {
             inTag = false;
           }
         } else {
-          if (m[1]) {  // Entity
-            if (handler.pcdata) { handler.pcdata(m[0], param); }
-          } else if (m[3]) {  // Tag
+          if (m[1]) { // Entity
+            if (handler.pcdata) {
+              handler.pcdata(m[0], param);
+            }
+          } else if (m[3]) { // Tag
             openTag = !m[2];
             inTag = true;
             tagName = lcase(m[3]);
-            eflags = html4.ELEMENTS.hasOwnProperty(tagName)
-                ? html4.ELEMENTS[tagName] : void 0;
-          } else if (m[4]) {  // Text
-            if (handler.pcdata) { handler.pcdata(m[4], param); }
-          } else if (m[5]) {  // Cruft
+            eflags = html4.ELEMENTS.hasOwnProperty(tagName) ? html4.ELEMENTS[tagName] : void 0;
+          } else if (m[4]) { // Text
+            if (handler.pcdata) {
+              handler.pcdata(m[4], param);
+            }
+          } else if (m[5]) { // Cruft
             if (handler.pcdata) {
               var ch = m[5];
               handler.pcdata(
-                  ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&amp;',
-                  param);
+                ch === '<' ? '&lt;' : ch === '>' ? '&gt;' : '&amp;',
+                param);
             }
           }
         }
       }
 
-      if (handler.endDoc) { handler.endDoc(param); }
+      if (handler.endDoc) {
+        handler.endDoc(param);
+      }
     };
   }
 
@@ -1282,101 +1312,116 @@ var html = (function (html4) {
     var stack;
     var ignoring;
     return makeSaxParser({
-        startDoc: function (_) {
-          stack = [];
-          ignoring = false;
-        },
-        startTag: function (tagName, attribs, out) {
-          if (ignoring) { return; }
-          if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
-          var eflags = html4.ELEMENTS[tagName];
-          if (eflags & html4.eflags.FOLDABLE) {
-            return;
-          } else if (eflags & html4.eflags.UNSAFE) {
-            ignoring = !(eflags & html4.eflags.EMPTY);
-            return;
-          }
-          attribs = sanitizeAttributes(tagName, attribs);
-          // TODO(mikesamuel): relying on sanitizeAttributes not to
-          // insert unsafe attribute names.
-          if (attribs) {
-            if (!(eflags & html4.eflags.EMPTY)) {
-              stack.push(tagName);
-            }
-
-            out.push('<', tagName);
-            for (var i = 0, n = attribs.length; i < n; i += 2) {
-              var attribName = attribs[i],
-                  value = attribs[i + 1];
-              if (value !== null && value !== void 0) {
-                out.push(' ', attribName, '="', escapeAttrib(value), '"');
-              }
-            }
-            out.push('>');
-          }
-        },
-        endTag: function (tagName, out) {
-          if (ignoring) {
-            ignoring = false;
-            return;
-          }
-          if (!html4.ELEMENTS.hasOwnProperty(tagName)) { return; }
-          var eflags = html4.ELEMENTS[tagName];
-          if (!(eflags & (html4.eflags.UNSAFE | html4.eflags.EMPTY
-                          | html4.eflags.FOLDABLE))) {
-            var index;
-            if (eflags & html4.eflags.OPTIONAL_ENDTAG) {
-              for (index = stack.length; --index >= 0;) {
-                var stackEl = stack[index];
-                if (stackEl === tagName) { break; }
-                if (!(html4.ELEMENTS[stackEl]
-                      & html4.eflags.OPTIONAL_ENDTAG)) {
-                  // Don't pop non optional end tags looking for a match.
-                  return;
-                }
-              }
-            } else {
-              for (index = stack.length; --index >= 0;) {
-                if (stack[index] === tagName) { break; }
-              }
-            }
-            if (index < 0) { return; }  // Not opened.
-            for (var i = stack.length; --i > index;) {
-              var stackEl = stack[i];
-              if (!(html4.ELEMENTS[stackEl]
-                    & html4.eflags.OPTIONAL_ENDTAG)) {
-                out.push('</', stackEl, '>');
-              }
-            }
-            stack.length = index;
-            out.push('</', tagName, '>');
-          }
-        },
-        pcdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
-        },
-        rcdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
-        },
-        cdata: function (text, out) {
-          if (!ignoring) { out.push(text); }
-        },
-        endDoc: function (out) {
-          for (var i = stack.length; --i >= 0;) {
-            out.push('</', stack[i], '>');
-          }
-          stack.length = 0;
+      startDoc: function(_) {
+        stack = [];
+        ignoring = false;
+      },
+      startTag: function(tagName, attribs, out) {
+        if (ignoring) {
+          return;
         }
-      });
+        if (!html4.ELEMENTS.hasOwnProperty(tagName)) {
+          return;
+        }
+        var eflags = html4.ELEMENTS[tagName];
+        if (eflags & html4.eflags.FOLDABLE) {
+          return;
+        } else if (eflags & html4.eflags.UNSAFE) {
+          ignoring = !(eflags & html4.eflags.EMPTY);
+          return;
+        }
+        attribs = sanitizeAttributes(tagName, attribs);
+        // TODO(mikesamuel): relying on sanitizeAttributes not to
+        // insert unsafe attribute names.
+        if (attribs) {
+          if (!(eflags & html4.eflags.EMPTY)) {
+            stack.push(tagName);
+          }
+
+          out.push('<', tagName);
+          for (var i = 0, n = attribs.length; i < n; i += 2) {
+            var attribName = attribs[i],
+              value = attribs[i + 1];
+            if (value !== null && value !== void 0) {
+              out.push(' ', attribName, '="', escapeAttrib(value), '"');
+            }
+          }
+          out.push('>');
+        }
+      },
+      endTag: function(tagName, out) {
+        if (ignoring) {
+          ignoring = false;
+          return;
+        }
+        if (!html4.ELEMENTS.hasOwnProperty(tagName)) {
+          return;
+        }
+        var eflags = html4.ELEMENTS[tagName];
+        if (!(eflags & (html4.eflags.UNSAFE | html4.eflags.EMPTY | html4.eflags.FOLDABLE))) {
+          var index;
+          if (eflags & html4.eflags.OPTIONAL_ENDTAG) {
+            for (index = stack.length; --index >= 0;) {
+              var stackEl = stack[index];
+              if (stackEl === tagName) {
+                break;
+              }
+              if (!(html4.ELEMENTS[stackEl] & html4.eflags.OPTIONAL_ENDTAG)) {
+                // Don't pop non optional end tags looking for a match.
+                return;
+              }
+            }
+          } else {
+            for (index = stack.length; --index >= 0;) {
+              if (stack[index] === tagName) {
+                break;
+              }
+            }
+          }
+          if (index < 0) {
+            return;
+          } // Not opened.
+          for (var i = stack.length; --i > index;) {
+            var stackEl = stack[i];
+            if (!(html4.ELEMENTS[stackEl] & html4.eflags.OPTIONAL_ENDTAG)) {
+              out.push('</', stackEl, '>');
+            }
+          }
+          stack.length = index;
+          out.push('</', tagName, '>');
+        }
+      },
+      pcdata: function(text, out) {
+        if (!ignoring) {
+          out.push(text);
+        }
+      },
+      rcdata: function(text, out) {
+        if (!ignoring) {
+          out.push(text);
+        }
+      },
+      cdata: function(text, out) {
+        if (!ignoring) {
+          out.push(text);
+        }
+      },
+      endDoc: function(out) {
+        for (var i = stack.length; --i >= 0;) {
+          out.push('</', stack[i], '>');
+        }
+        stack.length = 0;
+      }
+    });
   }
 
   // From RFC3986
   var URI_SCHEME_RE = new RegExp(
-        "^" +
-      "(?:" +
-        "([^:\/?#]+)" +         // scheme
-      ":)?"
-      );
+    "^" +
+    "(?:" +
+    "([^:\/?#]+)" + // scheme
+    ":)?"
+  );
 
   /**
    * Strips unsafe tags and attributes from html.
@@ -1397,16 +1442,17 @@ var html = (function (html4) {
         for (var i = 0; i < attribs.length; i += 2) {
           var attribName = attribs[i];
           var value = attribs[i + 1];
-          var atype = null, attribKey;
+          var atype = null,
+            attribKey;
           if ((attribKey = tagName + '::' + attribName,
-               html4.ATTRIBS.hasOwnProperty(attribKey))
-              || (attribKey = '*::' + attribName,
-                  html4.ATTRIBS.hasOwnProperty(attribKey))) {
+              html4.ATTRIBS.hasOwnProperty(attribKey)) || (attribKey = '*::' + attribName,
+              html4.ATTRIBS.hasOwnProperty(attribKey))) {
             atype = html4.ATTRIBS[attribKey];
           }
           if (atype !== null) {
             switch (atype) {
-              case html4.atype.NONE: break;
+              case html4.atype.NONE:
+                break;
               case html4.atype.SCRIPT:
               case html4.atype.STYLE:
                 value = null;
@@ -1424,7 +1470,7 @@ var html = (function (html4) {
                 if (!parsedUri) {
                   value = null;
                 } else if (!parsedUri[1] ||
-                    WHITELISTED_SCHEMES.test(parsedUri[1])) {
+                  WHITELISTED_SCHEMES.test(parsedUri[1])) {
                   value = opt_uriPolicy && opt_uriPolicy(value);
                 } else {
                   value = null;
@@ -1433,7 +1479,9 @@ var html = (function (html4) {
               case html4.atype.URI_FRAGMENT:
                 if (value && '#' === value.charAt(0)) {
                   value = opt_nmTokenPolicy ? opt_nmTokenPolicy(value) : value;
-                  if (value) { value = '#' + value; }
+                  if (value) {
+                    value = '#' + value;
+                  }
                 } else {
                   value = null;
                 }
@@ -1487,58 +1535,56 @@ html4.ATTRIBS['audio::src'] = 0;
 html4.ATTRIBS['video::autoplay'] = 0;
 html4.ATTRIBS['video::controls'] = 0;
 /*!
-  * Reqwest! A general purpose XHR connection manager
-  * (c) Dustin Diaz 2012
-  * https://github.com/ded/reqwest
-  * license MIT
-  */
-;(function (name, context, definition) {
-  context[name] = definition()
-})('reqwest', this, function () {
+ * Reqwest! A general purpose XHR connection manager
+ * (c) Dustin Diaz 2012
+ * https://github.com/ded/reqwest
+ * license MIT
+ */
+;
+(function(name, context, definition) {
+  global[name] = context[name] = definition()
 
-  var win = window
-    , doc = document
-    , twoHundo = /^20\d$/
-    , byTag = 'getElementsByTagName'
-    , readyState = 'readyState'
-    , contentType = 'Content-Type'
-    , requestedWith = 'X-Requested-With'
-    , head = doc[byTag]('head')[0]
-    , uniqid = 0
-    , callbackPrefix = 'reqwest_' + (+new Date())
-    , lastValue // data stored by the most recent JSONP callback
-    , xmlHttpRequest = 'XMLHttpRequest'
-    , noop = function () {}
+})('reqwest', this, function() {
 
-    , isArray = typeof Array.isArray == 'function'
-        ? Array.isArray
-        : function (a) {
-            return a instanceof Array
-          }
+  var win = window,
+    doc = document,
+    twoHundo = /^20\d$/,
+    byTag = 'getElementsByTagName',
+    readyState = 'readyState',
+    contentType = 'Content-Type',
+    requestedWith = 'X-Requested-With',
+    head = doc[byTag]('head')[0],
+    uniqid = 0,
+    callbackPrefix = 'reqwest_' + (+new Date()),
+    lastValue // data stored by the most recent JSONP callback
+    , xmlHttpRequest = 'XMLHttpRequest',
+    noop = function() {}
 
-    , defaultHeaders = {
-          contentType: 'application/x-www-form-urlencoded'
-        , requestedWith: xmlHttpRequest
-        , accept: {
-              '*':  'text/javascript, text/html, application/xml, text/xml, */*'
-            , xml:  'application/xml, text/xml'
-            , html: 'text/html'
-            , text: 'text/plain'
-            , json: 'application/json, text/javascript'
-            , js:   'application/javascript, text/javascript'
-          }
-      }
+  , isArray = typeof Array.isArray == 'function' ? Array.isArray : function(a) {
+    return a instanceof Array
+  }
 
-    , xhr = win[xmlHttpRequest]
-        ? function () {
-            return new XMLHttpRequest()
-          }
-        : function () {
-            return new ActiveXObject('Microsoft.XMLHTTP')
-          }
+  , defaultHeaders = {
+    contentType: 'application/x-www-form-urlencoded',
+    requestedWith: xmlHttpRequest,
+    accept: {
+      '*': 'text/javascript, text/html, application/xml, text/xml, */*',
+      xml: 'application/xml, text/xml',
+      html: 'text/html',
+      text: 'text/plain',
+      json: 'application/json, text/javascript',
+      js: 'application/javascript, text/javascript'
+    }
+  }
 
-  function handleReadyState (r, success, error) {
-    return function () {
+  , xhr = win[xmlHttpRequest] ? function() {
+    return new XMLHttpRequest()
+  } : function() {
+    return new ActiveXObject('Microsoft.XMLHTTP')
+  }
+
+  function handleReadyState(r, success, error) {
+    return function() {
       // use _aborted to mitigate against IE err c00c023f
       // (can't read props on aborted request objects)
       if (r._aborted) return error(r.request)
@@ -1552,13 +1598,11 @@ html4.ATTRIBS['video::controls'] = 0;
     }
   }
 
-  function setHeaders (http, o) {
-    var headers = o.headers || {}
-      , h
+  function setHeaders(http, o) {
+    var headers = o.headers || {},
+      h
 
-    headers.Accept = headers.Accept
-      || defaultHeaders.accept[o.type]
-      || defaultHeaders.accept['*']
+    headers.Accept = headers.Accept || defaultHeaders.accept[o.type] || defaultHeaders.accept['*']
 
     // breaks cross-origin requests with legacy browsers
     if (!o.crossOrigin && !headers[requestedWith]) headers[requestedWith] = defaultHeaders.requestedWith
@@ -1567,30 +1611,32 @@ html4.ATTRIBS['video::controls'] = 0;
       headers.hasOwnProperty(h) && http.setRequestHeader(h, headers[h])
   }
 
-  function setCredentials (http, o) {
+  function setCredentials(http, o) {
     if (typeof o.withCredentials !== 'undefined' && typeof http.withCredentials !== 'undefined') {
       http.withCredentials = !!o.withCredentials
     }
   }
 
-  function generalCallback (data) {
+  function generalCallback(data) {
     lastValue = data
   }
 
-  function urlappend (url, s) {
+  function urlappend(url, s) {
     return url + (/\?/.test(url) ? '&' : '?') + s
   }
 
-  function handleJsonp (o, fn, err, url) {
-    var reqId = uniqid++
-      , cbkey = o.jsonpCallback || 'callback' // the 'callback' key
-      , cbval = o.jsonpCallbackName || reqwest.getcallbackPrefix(reqId)
+  function handleJsonp(o, fn, err, url) {
+    var reqId = uniqid++,
+      cbkey = o.jsonpCallback || 'callback' // the 'callback' key
+      ,
+      cbval = o.jsonpCallbackName || reqwest.getcallbackPrefix(reqId)
       // , cbval = o.jsonpCallbackName || ('reqwest_' + reqId) // the 'callback' value
-      , cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)')
-      , match = url.match(cbreg)
-      , script = doc.createElement('script')
-      , loaded = 0
-      , isIE10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1;
+      ,
+      cbreg = new RegExp('((^|\\?|&)' + cbkey + ')=([^&]+)'),
+      match = url.match(cbreg),
+      script = doc.createElement('script'),
+      loaded = 0,
+      isIE10 = navigator.userAgent.indexOf('MSIE 10.0') !== -1;
 
     if (match) {
       if (match[3] === '?') {
@@ -1615,13 +1661,13 @@ html4.ATTRIBS['video::controls'] = 0;
       script.htmlFor = script.id = '_reqwest_' + reqId
     }
 
-    script.onload = script.onreadystatechange = function () {
+    script.onload = script.onreadystatechange = function() {
       if ((script[readyState] && script[readyState] !== 'complete' && script[readyState] !== 'loaded') || loaded) {
         return false
       }
       script.onload = script.onreadystatechange = null
       script.onclick && script.onclick()
-      // Call the user callback with the last value stored and clean up values and scripts.
+        // Call the user callback with the last value stored and clean up values and scripts.
       o.success && o.success(lastValue)
       lastValue = undefined
       head.removeChild(script)
@@ -1636,7 +1682,7 @@ html4.ATTRIBS['video::controls'] = 0;
 
     // Enable JSONP timeout
     return {
-      abort: function () {
+      abort: function() {
         script.onload = script.onreadystatechange = null
         o.error && o.error({}, 'Request is aborted: timeout', {})
         lastValue = undefined
@@ -1646,15 +1692,14 @@ html4.ATTRIBS['video::controls'] = 0;
     }
   }
 
-  function getRequest (fn, err) {
-    var o = this.o
-      , method = (o.method || 'GET').toUpperCase()
-      , url = typeof o === 'string' ? o : o.url
+  function getRequest(fn, err) {
+    var o = this.o,
+      method = (o.method || 'GET').toUpperCase(),
+      url = typeof o === 'string' ? o : o.url
       // convert non-string objects to query-string form unless o.processData is false
-      , data = (o.processData !== false && o.data && typeof o.data !== 'string')
-        ? reqwest.toQueryString(o.data)
-        : (o.data || null)
-      , http
+      ,
+      data = (o.processData !== false && o.data && typeof o.data !== 'string') ? reqwest.toQueryString(o.data) : (o.data || null),
+      http
 
     // if we're working on a GET request and we have data then we should append
     // query string to end of URL and not post data
@@ -1675,19 +1720,19 @@ html4.ATTRIBS['video::controls'] = 0;
     return http
   }
 
-  function Reqwest (o, fn) {
+  function Reqwest(o, fn) {
     this.o = o
     this.fn = fn
 
     init.apply(this, arguments)
   }
 
-  function setType (url) {
+  function setType(url) {
     var m = url.match(/\.(json|jsonp|html|xml)(\?|$)/)
     return m ? m[1] : 'js'
   }
 
-  function init (o, fn) {
+  function init(o, fn) {
 
     this.url = typeof o == 'string' ? o : o.url
     this.timeout = null
@@ -1695,45 +1740,45 @@ html4.ATTRIBS['video::controls'] = 0;
     // whether request has been fulfilled for purpose
     // of tracking the Promises
     this._fulfilled = false
-    // success handlers
+      // success handlers
     this._fulfillmentHandlers = []
-    // error handlers
+      // error handlers
     this._errorHandlers = []
-    // complete (both success and fail) handlers
+      // complete (both success and fail) handlers
     this._completeHandlers = []
     this._erred = false
     this._responseArgs = {}
 
-    var self = this
-      , type = o.type || setType(this.url)
+    var self = this,
+      type = o.type || setType(this.url)
 
-    fn = fn || function () {}
+    fn = fn || function() {}
 
     if (o.timeout) {
-      this.timeout = setTimeout(function () {
+      this.timeout = setTimeout(function() {
         self.abort()
       }, o.timeout)
     }
 
     if (o.success) {
-      this._fulfillmentHandlers.push(function () {
+      this._fulfillmentHandlers.push(function() {
         o.success.apply(o, arguments)
       })
     }
 
     if (o.error) {
-      this._errorHandlers.push(function () {
+      this._errorHandlers.push(function() {
         o.error.apply(o, arguments)
       })
     }
 
     if (o.complete) {
-      this._completeHandlers.push(function () {
+      this._completeHandlers.push(function() {
         o.complete.apply(o, arguments)
       })
     }
 
-    function complete (resp) {
+    function complete(resp) {
       o.timeout && clearTimeout(self.timeout)
       self.timeout = null
       while (self._completeHandlers.length > 0) {
@@ -1741,31 +1786,27 @@ html4.ATTRIBS['video::controls'] = 0;
       }
     }
 
-    function success (resp) {
+    function success(resp) {
       var r = resp.responseText
       if (r) {
         switch (type) {
-        case 'json':
-          try {
-            resp = win.JSON ? win.JSON.parse(r) : eval('(' + r + ')')
-          } catch (err) {
-            return error(resp, 'Could not parse JSON in response', err)
-          }
-          break
-        case 'js':
-          resp = eval(r)
-          break
-        case 'html':
-          resp = r
-          break
-        case 'xml':
-          resp = resp.responseXML
-              && resp.responseXML.parseError // IE trololo
-              && resp.responseXML.parseError.errorCode
-              && resp.responseXML.parseError.reason
-            ? null
-            : resp.responseXML
-          break
+          case 'json':
+            try {
+              resp = win.JSON ? win.JSON.parse(r) : eval('(' + r + ')')
+            } catch (err) {
+              return error(resp, 'Could not parse JSON in response', err)
+            }
+            break
+          case 'js':
+            resp = eval(r)
+            break
+          case 'html':
+            resp = r
+            break
+          case 'xml':
+            resp = resp.responseXML && resp.responseXML.parseError // IE trololo
+              && resp.responseXML.parseError.errorCode && resp.responseXML.parseError.reason ? null : resp.responseXML
+            break
         }
       }
 
@@ -1779,7 +1820,7 @@ html4.ATTRIBS['video::controls'] = 0;
       complete(resp)
     }
 
-    function error (resp, msg, t) {
+    function error(resp, msg, t) {
       self._responseArgs.resp = resp
       self._responseArgs.msg = msg
       self._responseArgs.t = t
@@ -1794,12 +1835,13 @@ html4.ATTRIBS['video::controls'] = 0;
   }
 
   Reqwest.prototype = {
-    abort: function () {
+    abort: function() {
       this._aborted = true
       this.request.abort()
     }
 
-  , retry: function () {
+    ,
+    retry: function() {
       init.call(this, this.o, this.fn)
     }
 
@@ -1811,7 +1853,8 @@ html4.ATTRIBS['video::controls'] = 0;
     /**
      * `then` will execute upon successful requests
      */
-  , then: function (success, fail) {
+    ,
+    then: function(success, fail) {
       if (this._fulfilled) {
         success(this._responseArgs.resp)
       } else if (this._erred) {
@@ -1826,7 +1869,8 @@ html4.ATTRIBS['video::controls'] = 0;
     /**
      * `always` will execute whether the request succeeds or fails
      */
-  , always: function (fn) {
+    ,
+    always: function(fn) {
       if (this._fulfilled || this._erred) {
         fn(this._responseArgs.resp)
       } else {
@@ -1838,7 +1882,8 @@ html4.ATTRIBS['video::controls'] = 0;
     /**
      * `fail` will execute when the request fails
      */
-  , fail: function (fn) {
+    ,
+    fail: function(fn) {
       if (this._erred) {
         fn(this._responseArgs.resp, this._responseArgs.msg, this._responseArgs.t)
       } else {
@@ -1848,84 +1893,84 @@ html4.ATTRIBS['video::controls'] = 0;
     }
   }
 
-  function reqwest (o, fn) {
+  function reqwest(o, fn) {
     return new Reqwest(o, fn)
   }
 
   // normalize newline variants according to spec -> CRLF
-  function normalize (s) {
+  function normalize(s) {
     return s ? s.replace(/\r?\n/g, '\r\n') : ''
   }
 
-  function serial (el, cb) {
-    var n = el.name
-      , t = el.tagName.toLowerCase()
-      , optCb = function (o) {
-          // IE gives value="" even where there is no value attribute
-          // 'specified' ref: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-862529273
-          if (o && !o.disabled)
-            cb(n, normalize(o.attributes.value && o.attributes.value.specified ? o.value : o.text))
-        }
-      , ch, ra, val, i
+  function serial(el, cb) {
+    var n = el.name,
+      t = el.tagName.toLowerCase(),
+      optCb = function(o) {
+        // IE gives value="" even where there is no value attribute
+        // 'specified' ref: http://www.w3.org/TR/DOM-Level-3-Core/core.html#ID-862529273
+        if (o && !o.disabled)
+          cb(n, normalize(o.attributes.value && o.attributes.value.specified ? o.value : o.text))
+      },
+      ch, ra, val, i
 
     // don't serialize elements that are disabled or without a name
     if (el.disabled || !n) return
 
     switch (t) {
-    case 'input':
-      if (!/reset|button|image|file/i.test(el.type)) {
-        ch = /checkbox/i.test(el.type)
-        ra = /radio/i.test(el.type)
-        val = el.value
-        // WebKit gives us "" instead of "on" if a checkbox has no value, so correct it here
-        ;(!(ch || ra) || el.checked) && cb(n, normalize(ch && val === '' ? 'on' : val))
-      }
-      break
-    case 'textarea':
-      cb(n, normalize(el.value))
-      break
-    case 'select':
-      if (el.type.toLowerCase() === 'select-one') {
-        optCb(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null)
-      } else {
-        for (i = 0; el.length && i < el.length; i++) {
-          el.options[i].selected && optCb(el.options[i])
+      case 'input':
+        if (!/reset|button|image|file/i.test(el.type)) {
+          ch = /checkbox/i.test(el.type)
+          ra = /radio/i.test(el.type)
+          val = el.value
+            // WebKit gives us "" instead of "on" if a checkbox has no value, so correct it here
+          ;
+          (!(ch || ra) || el.checked) && cb(n, normalize(ch && val === '' ? 'on' : val))
         }
-      }
-      break
+        break
+      case 'textarea':
+        cb(n, normalize(el.value))
+        break
+      case 'select':
+        if (el.type.toLowerCase() === 'select-one') {
+          optCb(el.selectedIndex >= 0 ? el.options[el.selectedIndex] : null)
+        } else {
+          for (i = 0; el.length && i < el.length; i++) {
+            el.options[i].selected && optCb(el.options[i])
+          }
+        }
+        break
     }
   }
 
   // collect up all form elements found from the passed argument elements all
   // the way down to child elements; pass a '<form>' or form fields.
   // called with 'this'=callback to use for serial() on each element
-  function eachFormElement () {
-    var cb = this
-      , e, i
-      , serializeSubtags = function (e, tags) {
-          var i, j, fa
-          for (i = 0; i < tags.length; i++) {
-            fa = e[byTag](tags[i])
-            for (j = 0; j < fa.length; j++) serial(fa[j], cb)
-          }
+  function eachFormElement() {
+    var cb = this,
+      e, i, serializeSubtags = function(e, tags) {
+        var i, j, fa
+        for (i = 0; i < tags.length; i++) {
+          fa = e[byTag](tags[i])
+          for (j = 0; j < fa.length; j++) serial(fa[j], cb)
         }
+      }
 
     for (i = 0; i < arguments.length; i++) {
       e = arguments[i]
       if (/input|select|textarea/i.test(e.tagName)) serial(e, cb)
-      serializeSubtags(e, [ 'input', 'select', 'textarea' ])
+      serializeSubtags(e, ['input', 'select', 'textarea'])
     }
   }
 
   // standard query string style serialization
-  function serializeQueryString () {
+  function serializeQueryString() {
     return reqwest.toQueryString(reqwest.serializeArray.apply(null, arguments))
   }
 
   // { 'name': 'value', ... } style serialization
-  function serializeHash () {
+  function serializeHash() {
     var hash = {}
-    eachFormElement.apply(function (name, value) {
+    eachFormElement.apply(function(name, value) {
       if (name in hash) {
         hash[name] && !isArray(hash[name]) && (hash[name] = [hash[name]])
         hash[name].push(value)
@@ -1935,18 +1980,20 @@ html4.ATTRIBS['video::controls'] = 0;
   }
 
   // [ { name: 'name', value: 'value' }, ... ] style serialization
-  reqwest.serializeArray = function () {
+  reqwest.serializeArray = function() {
     var arr = []
-    eachFormElement.apply(function (name, value) {
-      arr.push({name: name, value: value})
+    eachFormElement.apply(function(name, value) {
+      arr.push({
+        name: name,
+        value: value
+      })
     }, arguments)
     return arr
   }
 
-  reqwest.serialize = function () {
+  reqwest.serialize = function() {
     if (arguments.length === 0) return ''
-    var opt, fn
-      , args = Array.prototype.slice.call(arguments, 0)
+    var opt, fn, args = Array.prototype.slice.call(arguments, 0)
 
     opt = args.pop()
     opt && opt.nodeType && args.push(opt) && (opt = null)
@@ -1959,13 +2006,13 @@ html4.ATTRIBS['video::controls'] = 0;
     return fn.apply(null, args)
   }
 
-  reqwest.toQueryString = function (o) {
-    var qs = '', i
-      , enc = encodeURIComponent
-      , push = function (k, v) {
-          qs += enc(k) + '=' + enc(v) + '&'
-        }
-      , k, v
+  reqwest.toQueryString = function(o) {
+    var qs = '',
+      i, enc = encodeURIComponent,
+      push = function(k, v) {
+        qs += enc(k) + '=' + enc(v) + '&'
+      },
+      k, v
 
     if (isArray(o)) {
       for (i = 0; o && i < o.length; i++) push(o[i].name, o[i].value)
@@ -1983,13 +2030,13 @@ html4.ATTRIBS['video::controls'] = 0;
     return qs.replace(/&$/, '').replace(/%20/g, '+')
   }
 
-  reqwest.getcallbackPrefix = function () {
+  reqwest.getcallbackPrefix = function() {
     return callbackPrefix
   }
 
   // jQuery and Zepto compatibility, differences can be remapped here so you can call
   // .ajax.compat(options, callback)
-  reqwest.compat = function (o, fn) {
+  reqwest.compat = function(o, fn) {
     if (o) {
       o.type && (o.method = o.type) && delete o.type
       o.dataType && (o.type = o.dataType)
@@ -2000,98 +2047,98 @@ html4.ATTRIBS['video::controls'] = 0;
   }
 
   return reqwest
-})
-;wax = wax || {};
+});
+wax = wax || {};
 
 // Attribution
 // -----------
 wax.attribution = function() {
-    var a = {};
+  var a = {};
 
-    var container = document.createElement('div');
-    container.className = 'map-attribution';
+  var container = document.createElement('div');
+  container.className = 'map-attribution';
 
-    a.content = function(x) {
-        if (typeof x === 'undefined') return container.innerHTML;
-        container.innerHTML = wax.u.sanitize(x);
-        return this;
-    };
+  a.content = function(x) {
+    if (typeof x === 'undefined') return container.innerHTML;
+    container.innerHTML = wax.u.sanitize(x);
+    return this;
+  };
 
-    a.element = function() {
-        return container;
-    };
+  a.element = function() {
+    return container;
+  };
 
-    a.init = function() {
-        return this;
-    };
+  a.init = function() {
+    return this;
+  };
 
-    return a;
+  return a;
 };
 wax = wax || {};
 
 // Attribution
 // -----------
 wax.bwdetect = function(options, callback) {
-    var detector = {},
-        threshold = options.threshold || 400,
-        // test image: 30.29KB
-        testImage = 'http://a.tiles.mapbox.com/mapbox/1.0.0/blue-marble-topo-bathy-jul/0/0/0.png?preventcache=' + (+new Date()),
-        // High-bandwidth assumed
-        // 1: high bandwidth (.png, .jpg)
-        // 0: low bandwidth (.png128, .jpg70)
-        bw = 1,
-        // Alternative versions
-        auto = options.auto === undefined ? true : options.auto;
+  var detector = {},
+    threshold = options.threshold || 400,
+    // test image: 30.29KB
+    testImage = 'http://a.tiles.mapbox.com/mapbox/1.0.0/blue-marble-topo-bathy-jul/0/0/0.png?preventcache=' + (+new Date()),
+    // High-bandwidth assumed
+    // 1: high bandwidth (.png, .jpg)
+    // 0: low bandwidth (.png128, .jpg70)
+    bw = 1,
+    // Alternative versions
+    auto = options.auto === undefined ? true : options.auto;
 
-    function bwTest() {
-        wax.bw = -1;
-        var im = new Image();
-        im.src = testImage;
-        var first = true;
-        var timeout = setTimeout(function() {
-            if (first && wax.bw == -1) {
-                detector.bw(0);
-                first = false;
-            }
-        }, threshold);
-        im.onload = function() {
-            if (first && wax.bw == -1) {
-                clearTimeout(timeout);
-                detector.bw(1);
-                first = false;
-            }
-        };
-    }
-
-    detector.bw = function(x) {
-        if (!arguments.length) return bw;
-        var oldBw = bw;
-        if (wax.bwlisteners && wax.bwlisteners.length) (function () {
-            listeners = wax.bwlisteners;
-            wax.bwlisteners = [];
-            for (i = 0; i < listeners; i++) {
-                listeners[i](x);
-            }
-        })();
-        wax.bw = x;
-
-        if (bw != (bw = x)) callback(x);
+  function bwTest() {
+    wax.bw = -1;
+    var im = new Image();
+    im.src = testImage;
+    var first = true;
+    var timeout = setTimeout(function() {
+      if (first && wax.bw == -1) {
+        detector.bw(0);
+        first = false;
+      }
+    }, threshold);
+    im.onload = function() {
+      if (first && wax.bw == -1) {
+        clearTimeout(timeout);
+        detector.bw(1);
+        first = false;
+      }
     };
+  }
 
-    detector.add = function() {
-        if (auto) bwTest();
-        return this;
-    };
+  detector.bw = function(x) {
+    if (!arguments.length) return bw;
+    var oldBw = bw;
+    if (wax.bwlisteners && wax.bwlisteners.length)(function() {
+      listeners = wax.bwlisteners;
+      wax.bwlisteners = [];
+      for (i = 0; i < listeners; i++) {
+        listeners[i](x);
+      }
+    })();
+    wax.bw = x;
 
-    if (wax.bw == -1) {
-      wax.bwlisteners = wax.bwlisteners || [];
-      wax.bwlisteners.push(detector.bw);
-    } else if (wax.bw !== undefined) {
-        detector.bw(wax.bw);
-    } else {
-        detector.add();
-    }
-    return detector;
+    if (bw != (bw = x)) callback(x);
+  };
+
+  detector.add = function() {
+    if (auto) bwTest();
+    return this;
+  };
+
+  if (wax.bw == -1) {
+    wax.bwlisteners = wax.bwlisteners || [];
+    wax.bwlisteners.push(detector.bw);
+  } else if (wax.bw !== undefined) {
+    detector.bw(wax.bw);
+  } else {
+    detector.add();
+  }
+  return detector;
 };
 // Formatter
 // ---------
@@ -2099,34 +2146,34 @@ wax.bwdetect = function(options, callback) {
 // This code is no longer the recommended code path for Wax -
 // see `template.js`, a safe implementation of Mustache templates.
 wax.formatter = function(x) {
-    var formatter = {},
-        f;
+  var formatter = {},
+    f;
 
-    // Prevent against just any input being used.
-    if (x && typeof x === 'string') {
-        try {
-            // Ugly, dangerous use of eval.
-            eval('f = ' + x);
-        } catch (e) {
-            if (console) console.log(e);
-        }
-    } else if (x && typeof x === 'function') {
-        f = x;
-    } else {
-        f = function() {};
+  // Prevent against just any input being used.
+  if (x && typeof x === 'string') {
+    try {
+      // Ugly, dangerous use of eval.
+      eval('f = ' + x);
+    } catch (e) {
+      if (console) console.log(e);
     }
+  } else if (x && typeof x === 'function') {
+    f = x;
+  } else {
+    f = function() {};
+  }
 
-    // Wrap the given formatter function in order to
-    // catch exceptions that it may throw.
-    formatter.format = function(options, data) {
-        try {
-            return wax.u.sanitize(f(options, data));
-        } catch (e) {
-            if (console) console.log(e);
-        }
-    };
+  // Wrap the given formatter function in order to
+  // catch exceptions that it may throw.
+  formatter.format = function(options, data) {
+    try {
+      return wax.u.sanitize(f(options, data));
+    } catch (e) {
+      if (console) console.log(e);
+    }
+  };
 
-    return formatter;
+  return formatter;
 };
 // GridInstance
 // ------------
@@ -2135,69 +2182,69 @@ wax.formatter = function(x) {
 //
 // This code ignores format of 1.1-1.2
 wax.gi = function(grid_tile, options) {
-    options = options || {};
-    // resolution is the grid-elements-per-pixel ratio of gridded data.
-    // The size of a tile element. For now we expect tiles to be squares.
-    var instance = {},
-        resolution = options.resolution || 4,
-        tileSize = options.tileSize || 256;
+  options = options || {};
+  // resolution is the grid-elements-per-pixel ratio of gridded data.
+  // The size of a tile element. For now we expect tiles to be squares.
+  var instance = {},
+    resolution = options.resolution || 4,
+    tileSize = options.tileSize || 256;
 
-    // Resolve the UTF-8 encoding stored in grids to simple
-    // number values.
-    // See the [utfgrid spec](https://github.com/mapbox/utfgrid-spec)
-    // for details.
-    function resolveCode(key) {
-        if (key >= 93) key--;
-        if (key >= 35) key--;
-        key -= 32;
-        return key;
+  // Resolve the UTF-8 encoding stored in grids to simple
+  // number values.
+  // See the [utfgrid spec](https://github.com/mapbox/utfgrid-spec)
+  // for details.
+  function resolveCode(key) {
+    if (key >= 93) key--;
+    if (key >= 35) key--;
+    key -= 32;
+    return key;
+  }
+
+  instance.grid_tile = function() {
+    return grid_tile;
+  };
+
+  instance.getKey = function(x, y) {
+    if (!(grid_tile && grid_tile.grid)) return;
+    if ((y < 0) || (x < 0)) return;
+    if ((Math.floor(y) >= tileSize) ||
+      (Math.floor(x) >= tileSize)) return;
+    // Find the key in the grid. The above calls should ensure that
+    // the grid's array is large enough to make this work.
+    return resolveCode(grid_tile.grid[
+      Math.floor((y) / resolution)
+    ].charCodeAt(
+      Math.floor((x) / resolution)
+    ));
+  };
+
+  // Lower-level than tileFeature - has nothing to do
+  // with the DOM. Takes a px offset from 0, 0 of a grid.
+  instance.gridFeature = function(x, y) {
+    // Find the key in the grid. The above calls should ensure that
+    // the grid's array is large enough to make this work.
+    var key = this.getKey(x, y),
+      keys = grid_tile.keys;
+
+    if (keys &&
+      keys[key] &&
+      grid_tile.data[keys[key]]) {
+      return grid_tile.data[keys[key]];
     }
+  };
 
-    instance.grid_tile = function() {
-        return grid_tile;
-    };
+  // Get a feature:
+  // * `x` and `y`: the screen coordinates of an event
+  // * `tile_element`: a DOM element of a tile, from which we can get an offset.
+  instance.tileFeature = function(x, y, tile_element) {
+    if (!grid_tile) return;
+    // IE problem here - though recoverable, for whatever reason
+    var offset = wax.u.offset(tile_element);
+    feature = this.gridFeature(x - offset.left, y - offset.top);
+    return feature;
+  };
 
-    instance.getKey = function(x, y) {
-        if (!(grid_tile && grid_tile.grid)) return;
-        if ((y < 0) || (x < 0)) return;
-        if ((Math.floor(y) >= tileSize) ||
-            (Math.floor(x) >= tileSize)) return;
-        // Find the key in the grid. The above calls should ensure that
-        // the grid's array is large enough to make this work.
-        return resolveCode(grid_tile.grid[
-           Math.floor((y) / resolution)
-        ].charCodeAt(
-           Math.floor((x) / resolution)
-        ));
-    };
-
-    // Lower-level than tileFeature - has nothing to do
-    // with the DOM. Takes a px offset from 0, 0 of a grid.
-    instance.gridFeature = function(x, y) {
-        // Find the key in the grid. The above calls should ensure that
-        // the grid's array is large enough to make this work.
-        var key = this.getKey(x, y),
-            keys = grid_tile.keys;
-
-        if (keys &&
-            keys[key] &&
-            grid_tile.data[keys[key]]) {
-            return grid_tile.data[keys[key]];
-        }
-    };
-
-    // Get a feature:
-    // * `x` and `y`: the screen coordinates of an event
-    // * `tile_element`: a DOM element of a tile, from which we can get an offset.
-    instance.tileFeature = function(x, y, tile_element) {
-        if (!grid_tile) return;
-        // IE problem here - though recoverable, for whatever reason
-        var offset = wax.u.offset(tile_element);
-            feature = this.gridFeature(x - offset.left, y - offset.top);
-        return feature;
-    };
-
-    return instance;
+  return instance;
 };
 // GridManager
 // -----------
@@ -2208,549 +2255,553 @@ wax.gi = function(grid_tile, options) {
 // The default is 4.
 wax.gm = function() {
 
-    var resolution = 4,
-        grid_tiles = {},
-        manager = {},
-        tilejson,
-        formatter;
+  var resolution = 4,
+    grid_tiles = {},
+    manager = {},
+    tilejson,
+    formatter;
 
-    var gridUrl = function(url) {
-        if (url) {
-            return url.replace(/(\.png|\.jpg|\.jpeg)(\d*)/, '.grid.json');
-        }
+  var gridUrl = function(url) {
+    if (url) {
+      return url.replace(/(\.png|\.jpg|\.jpeg)(\d*)/, '.grid.json');
+    }
+  };
+
+  function templatedGridUrl(template) {
+    if (typeof template === 'string') template = [template];
+    return function templatedGridFinder(url) {
+      if (!url) return;
+      var rx = new RegExp(manager.tileRegexp())
+      var xyz = rx.exec(url);
+      if (!xyz) return;
+      return template[parseInt(xyz[2], 10) % template.length]
+        .replace(/\{z\}/g, xyz[1])
+        .replace(/\{x\}/g, xyz[2])
+        .replace(/\{y\}/g, xyz[3]);
     };
+  }
 
-    function templatedGridUrl(template) {
-        if (typeof template === 'string') template = [template];
-        return function templatedGridFinder(url) {
-            if (!url) return;
-            var rx = new RegExp(manager.tileRegexp())
-            var xyz = rx.exec(url);
-            if (!xyz) return;
-            return template[parseInt(xyz[2], 10) % template.length]
-                .replace(/\{z\}/g, xyz[1])
-                .replace(/\{x\}/g, xyz[2])
-                .replace(/\{y\}/g, xyz[3]);
-        };
+  // return the regexp to catch the tile number given the url
+  manager.tileRegexp = function() {
+    var tileTemplate = tilejson.tiles[0];
+    // remove params
+    var p = tileTemplate.indexOf('?');
+    if (p !== -1) {
+      tileTemplate = tileTemplate.substr(0, p);
+    }
+    // remove from the url all the special characters
+    // replacing them by a dot (dont mind the character)
+    tileTemplate = tileTemplate.
+    replace(/[\(\)\?\$\*\+\^]/g, '.')
+
+    // the browser removes the port in the case it matchs with
+    // the default port of the protocol
+    if (tileTemplate.indexOf('https') === 0) {
+      tileTemplate = tileTemplate.replace(':443', '[:0-9]*')
+    } else if (tileTemplate.indexOf('http') === 0) {
+      tileTemplate = tileTemplate.replace(':80', '[:0-9]*')
     }
 
-    // return the regexp to catch the tile number given the url
-    manager.tileRegexp = function() {
-      var tileTemplate = tilejson.tiles[0];
-      // remove params
-      var p = tileTemplate.indexOf('?');
-      if(p !== -1) {
-        tileTemplate = tileTemplate.substr(0, p);
-      }
-      // remove from the url all the special characters
-      // replacing them by a dot (dont mind the character)
-      tileTemplate = tileTemplate.
-                        replace(/[\(\)\?\$\*\+\^]/g,'.')
-
-      // the browser removes the port in the case it matchs with
-      // the default port of the protocol
-      if(tileTemplate.indexOf('https') === 0) {
-        tileTemplate = tileTemplate.replace(':443', '[:0-9]*')
-      } else if(tileTemplate.indexOf('http') === 0) {
-        tileTemplate = tileTemplate.replace(':80', '[:0-9]*')
-      }
-
-      var r = '';
-      if(tilejson.tiles.length > 1) {
-        var t0 = tilejson.tiles[0];
-        var t1 = tilejson.tiles[1];
-        //search characters where differs
-        for(var i = 0; i < t0.length; ++i) {
-          if(t0.charAt(i) != t1.charAt(i)) {
-            r += '.';
-          } else {
-            r += tileTemplate.charAt(i) || '';
-          }
+    var r = '';
+    if (tilejson.tiles.length > 1) {
+      var t0 = tilejson.tiles[0];
+      var t1 = tilejson.tiles[1];
+      //search characters where differs
+      for (var i = 0; i < t0.length; ++i) {
+        if (t0.charAt(i) != t1.charAt(i)) {
+          r += '.';
+        } else {
+          r += tileTemplate.charAt(i) || '';
         }
-      } else {
-        r = tileTemplate;
       }
-
-      // replace the first {x}{y}{z} by (\\d+)
-      return r
-        .replace(/\{x\}/,'(\\d+)')
-        .replace(/\{y\}/,'(\\d+)')
-        .replace(/\{z\}/,'(\\d+)')
+    } else {
+      r = tileTemplate;
     }
 
-    manager.formatter = function(x) {
-        if (!arguments.length) return formatter;
-        formatter =  wax.formatter(x);
-        return manager;
-    };
+    // replace the first {x}{y}{z} by (\\d+)
+    return r
+      .replace(/\{x\}/, '(\\d+)')
+      .replace(/\{y\}/, '(\\d+)')
+      .replace(/\{z\}/, '(\\d+)')
+  }
 
-    manager.template = function(x) {
-        if (!arguments.length) return formatter;
-        formatter = wax.template(x);
-        return manager;
-    };
-
-    manager.gridUrl = function(x) {
-        // Getter-setter
-        if (!arguments.length) return gridUrl;
-
-        // Handle tilesets that don't support grids
-        if (!x) {
-            gridUrl = function() { return null; };
-        } else {
-            gridUrl = typeof x === 'function' ?
-                x : templatedGridUrl(x);
-        }
-        return manager;
-    };
-
-    manager.getGrid = function(url, callback) {
-        var gurl = gridUrl(url);
-        if (!formatter || !gurl) return callback(null, null);
-
-        wax.request.get(gurl, function(err, t) {
-            if (err) return callback(err, null);
-            callback(null, wax.gi(t, {
-                formatter: formatter,
-                resolution: resolution
-            }));
-        });
-        return manager;
-    };
-
-    manager.tilejson = function(x) {
-        if (!arguments.length) return tilejson;
-        // prefer templates over formatters
-        if (x.template) {
-            manager.template(x.template);
-        } else if (x.formatter) {
-            manager.formatter(x.formatter);
-        } else {
-            // In this case, we cannot support grids
-            formatter = undefined;
-        }
-        manager.gridUrl(x.grids);
-        if (x.resolution) resolution = x.resolution;
-        tilejson = x;
-        return manager;
-    };
-
+  manager.formatter = function(x) {
+    if (!arguments.length) return formatter;
+    formatter = wax.formatter(x);
     return manager;
+  };
+
+  manager.template = function(x) {
+    if (!arguments.length) return formatter;
+    formatter = wax.template(x);
+    return manager;
+  };
+
+  manager.gridUrl = function(x) {
+    // Getter-setter
+    if (!arguments.length) return gridUrl;
+
+    // Handle tilesets that don't support grids
+    if (!x) {
+      gridUrl = function() {
+        return null;
+      };
+    } else {
+      gridUrl = typeof x === 'function' ?
+        x : templatedGridUrl(x);
+    }
+    return manager;
+  };
+
+  manager.getGrid = function(url, callback) {
+    var gurl = gridUrl(url);
+    if (!formatter || !gurl) return callback(null, null);
+
+    wax.request.get(gurl, function(err, t) {
+      if (err) return callback(err, null);
+      callback(null, wax.gi(t, {
+        formatter: formatter,
+        resolution: resolution
+      }));
+    });
+    return manager;
+  };
+
+  manager.tilejson = function(x) {
+    if (!arguments.length) return tilejson;
+    // prefer templates over formatters
+    if (x.template) {
+      manager.template(x.template);
+    } else if (x.formatter) {
+      manager.formatter(x.formatter);
+    } else {
+      // In this case, we cannot support grids
+      formatter = undefined;
+    }
+    manager.gridUrl(x.grids);
+    if (x.resolution) resolution = x.resolution;
+    tilejson = x;
+    return manager;
+  };
+
+  return manager;
 };
 wax = wax || {};
 
 // Hash
 // ----
 wax.hash = function(options) {
-    options = options || {};
+  options = options || {};
 
-    var s0, // old hash
-        hash = {},
-        lat = 90 - 1e-8;  // allowable latitude range
+  var s0, // old hash
+    hash = {},
+    lat = 90 - 1e-8; // allowable latitude range
 
-    function getState() {
-        return location.hash.substring(1);
+  function getState() {
+    return location.hash.substring(1);
+  }
+
+  function pushState(state) {
+    var l = window.location;
+    l.replace(l.toString().replace((l.hash || /$/), '#' + state));
+  }
+
+  function parseHash(s) {
+    var args = s.split('/');
+    for (var i = 0; i < args.length; i++) {
+      args[i] = Number(args[i]);
+      if (isNaN(args[i])) return true;
     }
-
-    function pushState(state) {
-        var l = window.location;
-        l.replace(l.toString().replace((l.hash || /$/), '#' + state));
+    if (args.length < 3) {
+      // replace bogus hash
+      return true;
+    } else if (args.length == 3) {
+      options.setCenterZoom(args);
     }
+  }
 
-    function parseHash(s) {
-        var args = s.split('/');
-        for (var i = 0; i < args.length; i++) {
-            args[i] = Number(args[i]);
-            if (isNaN(args[i])) return true;
-        }
-        if (args.length < 3) {
-            // replace bogus hash
-            return true;
-        } else if (args.length == 3) {
-            options.setCenterZoom(args);
-        }
+  function move() {
+    var s1 = options.getCenterZoom();
+    if (s0 !== s1) {
+      s0 = s1;
+      // don't recenter the map!
+      pushState(s0);
     }
+  }
 
-    function move() {
-        var s1 = options.getCenterZoom();
-        if (s0 !== s1) {
-            s0 = s1;
-            // don't recenter the map!
-            pushState(s0);
-        }
+  function stateChange(state) {
+    // ignore spurious hashchange events
+    if (state === s0) return;
+    if (parseHash(s0 = state)) {
+      // replace bogus hash
+      move();
     }
+  }
 
-    function stateChange(state) {
-        // ignore spurious hashchange events
-        if (state === s0) return;
-        if (parseHash(s0 = state)) {
-            // replace bogus hash
-            move();
-        }
-    }
+  var _move = wax.u.throttle(move, 500);
 
-    var _move = wax.u.throttle(move, 500);
-
-    hash.add = function() {
-        stateChange(getState());
-        options.bindChange(_move);
-        return hash;
-    };
-
-    hash.remove = function() {
-        options.unbindChange(_move);
-        return hash;
-    };
-
+  hash.add = function() {
+    stateChange(getState());
+    options.bindChange(_move);
     return hash;
+  };
+
+  hash.remove = function() {
+    options.unbindChange(_move);
+    return hash;
+  };
+
+  return hash;
 };
 wax = wax || {};
 
 wax.interaction = function() {
-    var gm = wax.gm(),
-        interaction = {},
-        _downLock = false,
-        _clickTimeout = null,
-        // Active feature
-        // Down event
-        _d,
-        // Touch tolerance
-        tol = 4,
-        grid,
-        attach,
-        detach,
-        parent,
-        map,
-        tileGrid,
-        // google maps sends touchmove and click at the same time 
-        // most of the time when an user taps the screen, see onUp 
-        // for more information
-        _discardTouchMove = false;
+  var gm = wax.gm(),
+    interaction = {},
+    _downLock = false,
+    _clickTimeout = null,
+    // Active feature
+    // Down event
+    _d,
+    // Touch tolerance
+    tol = 4,
+    grid,
+    attach,
+    detach,
+    parent,
+    map,
+    tileGrid,
+    // google maps sends touchmove and click at the same time 
+    // most of the time when an user taps the screen, see onUp 
+    // for more information
+    _discardTouchMove = false;
 
-    var defaultEvents = {
-        mousemove: onMove,
-        touchstart: onDown,
-        mousedown: onDown
-    };
+  var defaultEvents = {
+    mousemove: onMove,
+    touchstart: onDown,
+    mousedown: onDown
+  };
 
-    var touchEnds = {
-        touchend: onUp,
-        touchmove: onUp,
-        touchcancel: touchCancel
-    };
+  var touchEnds = {
+    touchend: onUp,
+    touchmove: onUp,
+    touchcancel: touchCancel
+  };
 
-    var mspointerEnds = {
-        MSPointerUp: onUp,
-        MSPointerMove: onUp,
-        MSPointerCancel: touchCancel
-    };
+  var mspointerEnds = {
+    MSPointerUp: onUp,
+    MSPointerMove: onUp,
+    MSPointerCancel: touchCancel
+  };
 
-    var pointerEnds = {
-        pointerup: onUp,
-        pointermove: onUp,
-        pointercancel: touchCancel
-    };
+  var pointerEnds = {
+    pointerup: onUp,
+    pointermove: onUp,
+    pointercancel: touchCancel
+  };
 
-    // Abstract getTile method. Depends on a tilegrid with
-    // grid[ [x, y, tile] ] structure.
-    function getTile(e) {
-        var g = grid();
-        var regExp = new RegExp(gm.tileRegexp());
-        for (var i = 0; i < g.length; i++) {
-            if (e) {
-                var isInside = ((g[i][0] <= e.y) &&
-                     ((g[i][0] + 256) > e.y) &&
-                      (g[i][1] <= e.x) &&
-                     ((g[i][1] + 256) > e.x));
-                if(isInside && regExp.exec(g[i][2].src)) {
-                    return g[i][2];
-                }
-            }
+  // Abstract getTile method. Depends on a tilegrid with
+  // grid[ [x, y, tile] ] structure.
+  function getTile(e) {
+    var g = grid();
+    var regExp = new RegExp(gm.tileRegexp());
+    for (var i = 0; i < g.length; i++) {
+      if (e) {
+        var isInside = ((g[i][0] <= e.y) &&
+          ((g[i][0] + 256) > e.y) &&
+          (g[i][1] <= e.x) &&
+          ((g[i][1] + 256) > e.x));
+        if (isInside && regExp.exec(g[i][2].src)) {
+          return g[i][2];
         }
-        return false;
+      }
+    }
+    return false;
+  }
+
+  // Clear the double-click timeout to prevent double-clicks from
+  // triggering popups.
+  function killTimeout() {
+    if (_clickTimeout) {
+      window.clearTimeout(_clickTimeout);
+      _clickTimeout = null;
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  function onMove(e) {
+    // If the user is actually dragging the map, exit early
+    // to avoid performance hits.
+    if (_downLock) return;
+
+    var _e = (e.type !== "MSPointerMove" && e.type !== "pointermove" ? e : e.originalEvent);
+    var pos = wax.u.eventoffset(_e);
+
+    interaction.screen_feature(pos, function(feature) {
+      if (feature) {
+        bean.fire(interaction, 'on', {
+          parent: parent(),
+          data: feature,
+          formatter: gm.formatter().format,
+          e: e
+        });
+      } else {
+        bean.fire(interaction, 'off');
+      }
+    });
+  }
+
+  // A handler for 'down' events - which means `mousedown` and `touchstart`
+  function onDown(e) {
+
+    // Prevent interaction offset calculations happening while
+    // the user is dragging the map.
+    //
+    // Store this event so that we can compare it to the
+    // up event
+    _downLock = true;
+    var _e = (e.type !== "MSPointerDown" && e.type !== "pointerdown" ? e : e.originalEvent);
+    _d = wax.u.eventoffset(_e);
+    if (e.type === 'mousedown') {
+      bean.add(document.body, 'click', onUp);
+      // track mouse up to remove lockDown when the drags end
+      bean.add(document.body, 'mouseup', dragEnd);
+
+      // Only track single-touches. Double-touches will not affect this
+      // control
+    } else if (e.type === 'touchstart' && e.touches.length === 1) {
+      //GMaps fix: Because it's triggering always mousedown and click, we've to remove it
+      bean.remove(document.body, 'click', onUp); //GMaps fix
+
+      //When we finish dragging, then the click will be 
+      bean.add(document.body, 'click', onUp);
+      bean.add(document.body, 'touchEnd', dragEnd);
+    } else if (e.originalEvent.type === "MSPointerDown" && e.originalEvent.touches && e.originalEvent.touches.length === 1) {
+      // Don't make the user click close if they hit another tooltip
+      bean.fire(interaction, 'off');
+      // Touch moves invalidate touches
+      bean.add(parent(), mspointerEnds);
+    } else if (e.type === "pointerdown" && e.originalEvent.touches && e.originalEvent.touches.length === 1) {
+      // Don't make the user click close if they hit another tooltip
+      bean.fire(interaction, 'off');
+      // Touch moves invalidate touches
+      bean.add(parent(), pointerEnds);
+    } else {
+      // Fix layer interaction in IE10/11 (CDBjs #139)
+      // Reason: Internet Explorer is triggering pointerdown when you click on the marker, and other browsers don't.
+      // Because of that, _downLock was active and it believed that you're dragging the map, instead of dragging the marker
+      _downLock = false;
     }
 
-    // Clear the double-click timeout to prevent double-clicks from
-    // triggering popups.
-    function killTimeout() {
-        if (_clickTimeout) {
-            window.clearTimeout(_clickTimeout);
+  }
+
+  function dragEnd() {
+    _downLock = false;
+  }
+
+  function touchCancel() {
+    bean.remove(parent(), touchEnds);
+    bean.remove(parent(), mspointerEnds);
+    bean.remove(parent(), pointerEnds);
+    _downLock = false;
+  }
+
+  function onUp(e) {
+    var evt = {};
+    var _e = (e.type !== "MSPointerMove" && e.type !== "MSPointerUp" && e.type !== "pointerup" && e.type !== "pointermove" ? e : e.originalEvent);
+    var pos = wax.u.eventoffset(_e);
+    _downLock = false;
+
+    for (var key in _e) {
+      evt[key] = _e[key];
+    }
+
+    // for (var key in e) {
+    //   evt[key] = e[key];
+    // }
+
+    bean.remove(document.body, 'mouseup', onUp);
+    bean.remove(parent(), touchEnds);
+    bean.remove(parent(), mspointerEnds);
+    bean.remove(parent(), pointerEnds);
+
+    if (e.type === 'touchend') {
+      // If this was a touch and it survived, there's no need to avoid a double-tap
+      // but also wax.u.eventoffset will have failed, since this touch
+      // event doesn't have coordinates
+      interaction.click(e, _d);
+    } else if (pos && _d) {
+      // If pos is not defined means wax can't calculate event position,
+      // So next cases aren't possible.
+
+      if (evt.type === "MSPointerMove" || evt.type === "MSPointerUp") {
+        evt.changedTouches = [];
+        interaction.click(evt, pos);
+      } else if (evt.type === "pointermove" || evt.type === "pointerup") {
+        interaction.click(evt, pos);
+      } else if (Math.round(pos.y / tol) === Math.round(_d.y / tol) &&
+        Math.round(pos.x / tol) === Math.round(_d.x / tol)) {
+        // if mousemove and click are sent at the same time this code
+        // will not trigger click event because less than 150ms pass between
+        // those events.
+        // Because of that this flag discards touchMove
+        if (_discardTouchMove && evt.type === 'touchmove') return onUp;
+        // Contain the event data in a closure.
+        // Ignore double-clicks by ignoring clicks within 300ms of
+        // each other.
+        if (!_clickTimeout) {
+          _clickTimeout = window.setTimeout(function() {
             _clickTimeout = null;
-            return true;
-        } else {
-            return false;
-        }
-    }
-
-    function onMove(e) {
-        // If the user is actually dragging the map, exit early
-        // to avoid performance hits.
-        if (_downLock) return;
-
-        var _e = (e.type !== "MSPointerMove" && e.type !== "pointermove" ? e : e.originalEvent);
-        var pos = wax.u.eventoffset(_e);
-
-        interaction.screen_feature(pos, function(feature) {
-            if (feature) {
-                bean.fire(interaction, 'on', {
-                    parent: parent(),
-                    data: feature,
-                    formatter: gm.formatter().format,
-                    e: e
-                });
-            } else {
-                bean.fire(interaction, 'off');
-            }
-        });
-    }
-
-    // A handler for 'down' events - which means `mousedown` and `touchstart`
-    function onDown(e) {
-
-        // Prevent interaction offset calculations happening while
-        // the user is dragging the map.
-        //
-        // Store this event so that we can compare it to the
-        // up event
-        _downLock = true;
-        var _e = (e.type !== "MSPointerDown" && e.type !== "pointerdown" ? e : e.originalEvent); 
-        _d = wax.u.eventoffset(_e);
-        if (e.type === 'mousedown') {
-            bean.add(document.body, 'click', onUp);
-            // track mouse up to remove lockDown when the drags end
-            bean.add(document.body, 'mouseup', dragEnd);
-
-        // Only track single-touches. Double-touches will not affect this
-        // control
-        } else if (e.type === 'touchstart' && e.touches.length === 1) {
-            //GMaps fix: Because it's triggering always mousedown and click, we've to remove it
-            bean.remove(document.body, 'click', onUp); //GMaps fix
-
-            //When we finish dragging, then the click will be 
-            bean.add(document.body, 'click', onUp);
-            bean.add(document.body, 'touchEnd', dragEnd);
-        } else if (e.originalEvent.type === "MSPointerDown" && e.originalEvent.touches && e.originalEvent.touches.length === 1) {
-          // Don't make the user click close if they hit another tooltip
-            bean.fire(interaction, 'off');
-            // Touch moves invalidate touches
-            bean.add(parent(), mspointerEnds);
-        } else if (e.type === "pointerdown" && e.originalEvent.touches && e.originalEvent.touches.length === 1) {
-            // Don't make the user click close if they hit another tooltip
-            bean.fire(interaction, 'off');
-            // Touch moves invalidate touches
-            bean.add(parent(), pointerEnds);
-        } else {
-            // Fix layer interaction in IE10/11 (CDBjs #139)
-            // Reason: Internet Explorer is triggering pointerdown when you click on the marker, and other browsers don't.
-            // Because of that, _downLock was active and it believed that you're dragging the map, instead of dragging the marker
-            _downLock = false;
-        }
-
-    }
-
-    function dragEnd() {
-        _downLock = false;
-    }
-
-    function touchCancel() {
-        bean.remove(parent(), touchEnds);
-        bean.remove(parent(), mspointerEnds);
-        bean.remove(parent(), pointerEnds);
-        _downLock = false;
-    }
-
-    function onUp(e) {
-        var evt = {};
-        var _e = (e.type !== "MSPointerMove" && e.type !== "MSPointerUp" && e.type !== "pointerup" && e.type !== "pointermove" ? e : e.originalEvent);
-        var pos = wax.u.eventoffset(_e);
-        _downLock = false;
-
-        for (var key in _e) {
-          evt[key] = _e[key];
-        }
-
-        // for (var key in e) {
-        //   evt[key] = e[key];
-        // }
-
-        bean.remove(document.body, 'mouseup', onUp);
-        bean.remove(parent(), touchEnds);
-        bean.remove(parent(), mspointerEnds);
-        bean.remove(parent(), pointerEnds);
-
-        if (e.type === 'touchend') {
-            // If this was a touch and it survived, there's no need to avoid a double-tap
-            // but also wax.u.eventoffset will have failed, since this touch
-            // event doesn't have coordinates
-            interaction.click(e, _d);
-        } else if (pos && _d) {
-          // If pos is not defined means wax can't calculate event position,
-          // So next cases aren't possible.
-
-          if (evt.type === "MSPointerMove" || evt.type === "MSPointerUp") {
-            evt.changedTouches = [];
             interaction.click(evt, pos);
-          } else if (evt.type === "pointermove" || evt.type === "pointerup") {
-            interaction.click(evt, pos);
-          } else if (Math.round(pos.y / tol) === Math.round(_d.y / tol) &&
-            Math.round(pos.x / tol) === Math.round(_d.x / tol)) {
-            // if mousemove and click are sent at the same time this code
-            // will not trigger click event because less than 150ms pass between
-            // those events.
-            // Because of that this flag discards touchMove
-            if (_discardTouchMove && evt.type === 'touchmove') return onUp;
-            // Contain the event data in a closure.
-            // Ignore double-clicks by ignoring clicks within 300ms of
-            // each other.
-            if(!_clickTimeout) {
-              _clickTimeout = window.setTimeout(function() {
-                  _clickTimeout = null;
-                  interaction.click(evt, pos);
-              }, 150);
-            } else {
-              killTimeout();
-            }
-          }
-
+          }, 150);
+        } else {
+          killTimeout();
         }
+      }
 
-        return onUp;
     }
 
-    interaction.discardTouchMove = function(_) {
-      if (!arguments.length) return _discardTouchMove;
-      _discardTouchMove = _;
-      return interaction;
-    }
+    return onUp;
+  }
 
-    // Handle a click event. Takes a second
-    interaction.click = function(e, pos) {
-        interaction.screen_feature(pos, function(feature) {
-            if (feature) bean.fire(interaction, 'on', {
-                parent: parent(),
-                data: feature,
-                formatter: gm.formatter().format,
-                e: e
-            });
-        });
-    };
-
-    interaction.screen_feature = function(pos, callback) {
-        var tile = getTile(pos);
-        if (!tile) callback(null);
-        gm.getGrid(tile.src, function(err, g) {
-            if (err || !g) return callback(null);
-            var feature = g.tileFeature(pos.x, pos.y, tile);
-            callback(feature);
-        });
-    };
-
-    // set an attach function that should be
-    // called when maps are set
-    interaction.attach = function(x) {
-        if (!arguments.length) return attach;
-        attach = x;
-        return interaction;
-    };
-
-    interaction.detach = function(x) {
-        if (!arguments.length) return detach;
-        detach = x;
-        return interaction;
-    };
-
-    // Attach listeners to the map
-    interaction.map = function(x) {
-        if (!arguments.length) return map;
-        map = x;
-        if (attach) attach(map);
-        bean.add(parent(), defaultEvents);
-        bean.add(parent(), 'touchstart', onDown);
-        bean.add(parent(), 'MSPointerDown', onDown);
-        bean.add(parent(), 'pointerdown', onDown);
-        return interaction;
-    };
-
-    // set a grid getter for this control
-    interaction.grid = function(x) {
-        if (!arguments.length) return grid;
-        grid = x;
-        return interaction;
-    };
-
-    // detach this and its events from the map cleanly
-    interaction.remove = function(x) {
-        if (detach) detach(map);
-        bean.remove(parent(), defaultEvents);
-        bean.fire(interaction, 'remove');
-        return interaction;
-    };
-
-    // get or set a tilejson chunk of json
-    interaction.tilejson = function(x) {
-        if (!arguments.length) return gm.tilejson();
-        gm.tilejson(x);
-        return interaction;
-    };
-
-    // return the formatter, which has an exposed .format
-    // function
-    interaction.formatter = function() {
-        return gm.formatter();
-    };
-
-    // ev can be 'on', 'off', fn is the handler
-    interaction.on = function(ev, fn) {
-        bean.add(interaction, ev, fn);
-        return interaction;
-    };
-
-    // ev can be 'on', 'off', fn is the handler
-    interaction.off = function(ev, fn) {
-        bean.remove(interaction, ev, fn);
-        return interaction;
-    };
-
-    // Return or set the gridmanager implementation
-    interaction.gridmanager = function(x) {
-        if (!arguments.length) return gm;
-        gm = x;
-        return interaction;
-    };
-
-    // parent should be a function that returns
-    // the parent element of the map
-    interaction.parent  = function(x) {
-        parent = x;
-        return interaction;
-    };
-
+  interaction.discardTouchMove = function(_) {
+    if (!arguments.length) return _discardTouchMove;
+    _discardTouchMove = _;
     return interaction;
+  }
+
+  // Handle a click event. Takes a second
+  interaction.click = function(e, pos) {
+    interaction.screen_feature(pos, function(feature) {
+      if (feature) bean.fire(interaction, 'on', {
+        parent: parent(),
+        data: feature,
+        formatter: gm.formatter().format,
+        e: e
+      });
+    });
+  };
+
+  interaction.screen_feature = function(pos, callback) {
+    var tile = getTile(pos);
+    if (!tile) callback(null);
+    gm.getGrid(tile.src, function(err, g) {
+      if (err || !g) return callback(null);
+      var feature = g.tileFeature(pos.x, pos.y, tile);
+      callback(feature);
+    });
+  };
+
+  // set an attach function that should be
+  // called when maps are set
+  interaction.attach = function(x) {
+    if (!arguments.length) return attach;
+    attach = x;
+    return interaction;
+  };
+
+  interaction.detach = function(x) {
+    if (!arguments.length) return detach;
+    detach = x;
+    return interaction;
+  };
+
+  // Attach listeners to the map
+  interaction.map = function(x) {
+    if (!arguments.length) return map;
+    map = x;
+    if (attach) attach(map);
+    bean.add(parent(), defaultEvents);
+    bean.add(parent(), 'touchstart', onDown);
+    bean.add(parent(), 'MSPointerDown', onDown);
+    bean.add(parent(), 'pointerdown', onDown);
+    return interaction;
+  };
+
+  // set a grid getter for this control
+  interaction.grid = function(x) {
+    if (!arguments.length) return grid;
+    grid = x;
+    return interaction;
+  };
+
+  // detach this and its events from the map cleanly
+  interaction.remove = function(x) {
+    if (detach) detach(map);
+    bean.remove(parent(), defaultEvents);
+    bean.fire(interaction, 'remove');
+    return interaction;
+  };
+
+  // get or set a tilejson chunk of json
+  interaction.tilejson = function(x) {
+    if (!arguments.length) return gm.tilejson();
+    gm.tilejson(x);
+    return interaction;
+  };
+
+  // return the formatter, which has an exposed .format
+  // function
+  interaction.formatter = function() {
+    return gm.formatter();
+  };
+
+  // ev can be 'on', 'off', fn is the handler
+  interaction.on = function(ev, fn) {
+    bean.add(interaction, ev, fn);
+    return interaction;
+  };
+
+  // ev can be 'on', 'off', fn is the handler
+  interaction.off = function(ev, fn) {
+    bean.remove(interaction, ev, fn);
+    return interaction;
+  };
+
+  // Return or set the gridmanager implementation
+  interaction.gridmanager = function(x) {
+    if (!arguments.length) return gm;
+    gm = x;
+    return interaction;
+  };
+
+  // parent should be a function that returns
+  // the parent element of the map
+  interaction.parent = function(x) {
+    parent = x;
+    return interaction;
+  };
+
+  return interaction;
 };
 var wax = wax || {};
 
 wax.location = function() {
 
-    var t = {};
+  var t = {};
 
-    function on(o) {
-        if ((o.e.type === 'mousemove' || !o.e.type)) {
-            return;
-        } else {
-            var loc = o.formatter({ format: 'location' }, o.data);
-            if (loc) {
-                window.location.href = loc;
-            }
-        }
+  function on(o) {
+    if ((o.e.type === 'mousemove' || !o.e.type)) {
+      return;
+    } else {
+      var loc = o.formatter({
+        format: 'location'
+      }, o.data);
+      if (loc) {
+        window.location.href = loc;
+      }
     }
+  }
 
-    t.events = function() {
-        return {
-            on: on
-        };
+  t.events = function() {
+    return {
+      on: on
     };
+  };
 
-    return t;
+  return t;
 
 };
 // Wax GridUtil
@@ -2763,370 +2814,380 @@ var wax = wax || {};
 // -------
 // Request data cache. `callback(data)` where `data` is the response data.
 wax.request = {
-    cache: {},
-    locks: {},
-    promises: {},
-    get: function(url, callback) {
-        // Cache hit.
-        if (this.cache[url]) {
-            return callback(this.cache[url][0], this.cache[url][1]);
-        // Cache miss.
-        } else {
-            this.promises[url] = this.promises[url] || [];
-            this.promises[url].push(callback);
-            // Lock hit.
-            if (this.locks[url]) return;
-            // Request.
-            var that = this;
-            this.locks[url] = true;
-            reqwest({
-                url: url + (~url.indexOf('?') ? '&' : '?') + 'callback=grid',
-                type: 'jsonp',
-                jsonpCallback: 'callback',
-                success: function(data) {
-                    that.locks[url] = false;
-                    that.cache[url] = [null, data];
-                    for (var i = 0; i < that.promises[url].length; i++) {
-                        that.promises[url][i](that.cache[url][0], that.cache[url][1]);
-                    }
-                },
-                error: function(err) {
-                    that.locks[url] = false;
-                    that.cache[url] = [err, null];
-                    for (var i = 0; i < that.promises[url].length; i++) {
-                        that.promises[url][i](that.cache[url][0], that.cache[url][1]);
-                    }
-                }
-            });
+  cache: {},
+  locks: {},
+  promises: {},
+  get: function(url, callback) {
+    // Cache hit.
+    if (this.cache[url]) {
+      return callback(this.cache[url][0], this.cache[url][1]);
+      // Cache miss.
+    } else {
+      this.promises[url] = this.promises[url] || [];
+      this.promises[url].push(callback);
+      // Lock hit.
+      if (this.locks[url]) return;
+      // Request.
+      var that = this;
+      this.locks[url] = true;
+      reqwest({
+        url: url + (~url.indexOf('?') ? '&' : '?') + 'callback=grid',
+        type: 'jsonp',
+        jsonpCallback: 'callback',
+        success: function(data) {
+          that.locks[url] = false;
+          that.cache[url] = [null, data];
+          for (var i = 0; i < that.promises[url].length; i++) {
+            that.promises[url][i](that.cache[url][0], that.cache[url][1]);
+          }
+        },
+        error: function(err) {
+          that.locks[url] = false;
+          that.cache[url] = [err, null];
+          for (var i = 0; i < that.promises[url].length; i++) {
+            that.promises[url][i](that.cache[url][0], that.cache[url][1]);
+          }
         }
+      });
     }
+  }
 };
 // Templating
 // ---------
 wax.template = function(x) {
-    var template = {};
+  var template = {};
 
-    // Clone the data object such that the '__[format]__' key is only
-    // set for this instance of templating.
-    template.format = function(options, data) {
+  // Clone the data object such that the '__[format]__' key is only
+  // set for this instance of templating.
+  template.format = function(options, data) {
 
-        // mustache.js has been removed as a dependency
-        throw new Error('mustache.js templates are no longer supported');
+    // mustache.js has been removed as a dependency
+    throw new Error('mustache.js templates are no longer supported');
 
-        // var clone = {};
-        // for (var key in data) {
-        //     clone[key] = data[key];
-        // }
-        // if (options.format) {
-        //     clone['__' + options.format + '__'] = true;
-        // }
-        // return wax.u.sanitize(Mustache.to_html(x, clone));
-    };
+    // var clone = {};
+    // for (var key in data) {
+    //     clone[key] = data[key];
+    // }
+    // if (options.format) {
+    //     clone['__' + options.format + '__'] = true;
+    // }
+    // return wax.u.sanitize(Mustache.to_html(x, clone));
+  };
 
-    return template;
+  return template;
 };
 if (!wax) var wax = {};
 
 // A wrapper for reqwest jsonp to easily load TileJSON from a URL.
 wax.tilejson = function(url, callback) {
-    reqwest({
-        url: url + (~url.indexOf('?') ? '&' : '?') + 'callback=grid',
-        type: 'jsonp',
-        jsonpCallback: 'callback',
-        success: callback,
-        error: callback
-    });
+  reqwest({
+    url: url + (~url.indexOf('?') ? '&' : '?') + 'callback=grid',
+    type: 'jsonp',
+    jsonpCallback: 'callback',
+    success: callback,
+    error: callback
+  });
 };
 var wax = wax || {};
 
 // Utils are extracted from other libraries or
 // written from scratch to plug holes in browser compatibility.
 wax.u = {
-    // From Bonzo
-    offset: function(el) {
-        // TODO: window margins
-        //
-        // Okay, so fall back to styles if offsetWidth and height are botched
-        // by Firefox.
-        var width = el.offsetWidth || parseInt(el.style.width, 10),
-            height = el.offsetHeight || parseInt(el.style.height, 10),
-            doc_body = document.body,
-            top = 0,
-            left = 0;
+  // From Bonzo
+  offset: function(el) {
+    // TODO: window margins
+    //
+    // Okay, so fall back to styles if offsetWidth and height are botched
+    // by Firefox.
+    var width = el.offsetWidth || parseInt(el.style.width, 10),
+      height = el.offsetHeight || parseInt(el.style.height, 10),
+      doc_body = document.body,
+      top = 0,
+      left = 0;
 
-        var calculateOffset = function(el) {
-            if (el === doc_body || el === document.documentElement) return;
-            top += el.offsetTop;
-            left += el.offsetLeft;
+    var calculateOffset = function(el) {
+      if (el === doc_body || el === document.documentElement) return;
+      top += el.offsetTop;
+      left += el.offsetLeft;
 
-            var style = el.style.transform ||
-                el.style.WebkitTransform ||
-                el.style.OTransform ||
-                el.style.MozTransform ||
-                el.style.msTransform;
+      var style = el.style.transform ||
+        el.style.WebkitTransform ||
+        el.style.OTransform ||
+        el.style.MozTransform ||
+        el.style.msTransform;
 
-            if (style) {
-                var match;
-                if (match = style.match(/translate\((.+)px, (.+)px\)/)) {
-                    top += parseInt(match[2], 10);
-                    left += parseInt(match[1], 10);
-                } else if (match = style.match(/translate3d\((.+)px, (.+)px, (.+)px\)/)) {
-                    top += parseInt(match[2], 10);
-                    left += parseInt(match[1], 10);
-                } else if (match = style.match(/matrix3d\(([\-\d,\s]+)\)/)) {
-                    var pts = match[1].split(',');
-                    top += parseInt(pts[13], 10);
-                    left += parseInt(pts[12], 10);
-                } else if (match = style.match(/matrix\(.+, .+, .+, .+, (.+), (.+)\)/)) {
-                    top += parseInt(match[2], 10);
-                    left += parseInt(match[1], 10);
-                }
-            }
-        };
+      if (style) {
+        var match;
+        if (match = style.match(/translate\((.+)px, (.+)px\)/)) {
+          top += parseInt(match[2], 10);
+          left += parseInt(match[1], 10);
+        } else if (match = style.match(/translate3d\((.+)px, (.+)px, (.+)px\)/)) {
+          top += parseInt(match[2], 10);
+          left += parseInt(match[1], 10);
+        } else if (match = style.match(/matrix3d\(([\-\d,\s]+)\)/)) {
+          var pts = match[1].split(',');
+          top += parseInt(pts[13], 10);
+          left += parseInt(pts[12], 10);
+        } else if (match = style.match(/matrix\(.+, .+, .+, .+, (.+), (.+)\)/)) {
+          top += parseInt(match[2], 10);
+          left += parseInt(match[1], 10);
+        }
+      }
+    };
 
-        //Function that protects 'Unspected error' with Internet Explorer 11
-        function calculateOffsetIE(){
+    //Function that protects 'Unspected error' with Internet Explorer 11
+    function calculateOffsetIE() {
+      calculateOffset(el);
+      try {
+        while (el = el.offsetParent) {
           calculateOffset(el);
-          try {
-              while (el = el.offsetParent) { calculateOffset(el); }
-          } catch(e) {
-              // Hello, internet explorer.
-          }
         }
-
-        // from jquery, offset.js
-        if ( typeof el.getBoundingClientRect !== "undefined" ) {
-          var body = document.body;
-          var doc = el.ownerDocument.documentElement;
-          var clientTop  = document.clientTop  || body.clientTop  || 0;
-          var clientLeft = document.clientLeft || body.clientLeft || 0;
-          var scrollTop  = window.pageYOffset || doc.scrollTop;
-          var scrollLeft = window.pageXOffset || doc.scrollLeft;
-
-          //With Internet Explorer 11, the function getBoundingClientRect() sometimes
-          //triggers the error: 'Unspected error.' Protecting it with try/catch
-          try {
-              var box = el.getBoundingClientRect();
-              top = box.top + scrollTop  - clientTop;
-              left = box.left + scrollLeft - clientLeft;
-          } catch(e) {
-              calculateOffsetIE();
-          }
-        } else {
-          calculateOffsetIE();
-        }
-
-        // Offsets from the body
-        top += doc_body.offsetTop;
-        left += doc_body.offsetLeft;
-        // Offsets from the HTML element
-        top += doc_body.parentNode.offsetTop;
-        left += doc_body.parentNode.offsetLeft;
-
-        // Firefox and other weirdos. Similar technique to jQuery's
-        // `doesNotIncludeMarginInBodyOffset`.
-        var htmlComputed = document.defaultView ?
-            window.getComputedStyle(doc_body.parentNode, null) :
-            doc_body.parentNode.currentStyle;
-        if (doc_body.parentNode.offsetTop !==
-            parseInt(htmlComputed.marginTop, 10) &&
-            !isNaN(parseInt(htmlComputed.marginTop, 10))) {
-            top += parseInt(htmlComputed.marginTop, 10);
-            left += parseInt(htmlComputed.marginLeft, 10);
-        }
-
-        return {
-            top: top,
-            left: left,
-            height: height,
-            width: width
-        };
-    },
-
-    '$': function(x) {
-        return (typeof x === 'string') ?
-            document.getElementById(x) :
-            x;
-    },
-
-    // From quirksmode: normalize the offset of an event from the top-left
-    // of the page.
-    eventoffset: function(e) {
-        var posx = 0;
-        var posy = 0;
-        if (!e) { e = window.event; }
-        if (e.type == "MSPointerMove" || e.type == "MSPointerDown" || e.type == "MSPointerUp") {
-          return {
-            x: e.pageX + window.pageXOffset,
-            y: e.pageY + window.pageYOffset
-          }
-        }
-        if (e.pageX || e.pageY) {
-            // Good browsers
-            return {
-                x: e.pageX,
-                y: e.pageY
-            };
-        } else if (e.clientX || e.clientY) {
-            // Internet Explorer
-            return {
-                x: e.clientX,
-                y: e.clientY
-            };
-        } else if (e.touches && e.touches.length === 1) {
-            // Touch browsers
-            return {
-                x: e.touches[0].pageX,
-                y: e.touches[0].pageY
-            };
-        }
-    },
-
-    // Ripped from underscore.js
-    // Internal function used to implement `_.throttle` and `_.debounce`.
-    limit: function(func, wait, debounce) {
-        var timeout;
-        return function() {
-            var context = this, args = arguments;
-            var throttler = function() {
-                timeout = null;
-                func.apply(context, args);
-            };
-            if (debounce) clearTimeout(timeout);
-            if (debounce || !timeout) timeout = setTimeout(throttler, wait);
-        };
-    },
-
-    // Returns a function, that, when invoked, will only be triggered at most once
-    // during a given window of time.
-    throttle: function(func, wait) {
-        return this.limit(func, wait, false);
-    },
-
-    sanitize: function(content) {
-        if (!content) return '';
-
-        function urlX(url) {
-            // Data URIs are subject to a bug in Firefox
-            // https://bugzilla.mozilla.org/show_bug.cgi?id=255107
-            // which let them be a vector. But WebKit does 'the right thing'
-            // or at least 'something' about this situation, so we'll tolerate
-            // them.
-            if (/^(https?:\/\/|data:image)/.test(url)) {
-                return url;
-            }
-        }
-
-        function idX(id) { return id; }
-
-        return html_sanitize(content, urlX, idX);
+      } catch (e) {
+        // Hello, internet explorer.
+      }
     }
+
+    // from jquery, offset.js
+    if (typeof el.getBoundingClientRect !== "undefined") {
+      var body = document.body;
+      var doc = el.ownerDocument.documentElement;
+      var clientTop = document.clientTop || body.clientTop || 0;
+      var clientLeft = document.clientLeft || body.clientLeft || 0;
+      var scrollTop = window.pageYOffset || doc.scrollTop;
+      var scrollLeft = window.pageXOffset || doc.scrollLeft;
+
+      //With Internet Explorer 11, the function getBoundingClientRect() sometimes
+      //triggers the error: 'Unspected error.' Protecting it with try/catch
+      try {
+        var box = el.getBoundingClientRect();
+        top = box.top + scrollTop - clientTop;
+        left = box.left + scrollLeft - clientLeft;
+      } catch (e) {
+        calculateOffsetIE();
+      }
+    } else {
+      calculateOffsetIE();
+    }
+
+    // Offsets from the body
+    top += doc_body.offsetTop;
+    left += doc_body.offsetLeft;
+    // Offsets from the HTML element
+    top += doc_body.parentNode.offsetTop;
+    left += doc_body.parentNode.offsetLeft;
+
+    // Firefox and other weirdos. Similar technique to jQuery's
+    // `doesNotIncludeMarginInBodyOffset`.
+    var htmlComputed = document.defaultView ?
+      window.getComputedStyle(doc_body.parentNode, null) :
+      doc_body.parentNode.currentStyle;
+    if (doc_body.parentNode.offsetTop !==
+      parseInt(htmlComputed.marginTop, 10) &&
+      !isNaN(parseInt(htmlComputed.marginTop, 10))) {
+      top += parseInt(htmlComputed.marginTop, 10);
+      left += parseInt(htmlComputed.marginLeft, 10);
+    }
+
+    return {
+      top: top,
+      left: left,
+      height: height,
+      width: width
+    };
+  },
+
+  '$': function(x) {
+    return (typeof x === 'string') ?
+      document.getElementById(x) :
+      x;
+  },
+
+  // From quirksmode: normalize the offset of an event from the top-left
+  // of the page.
+  eventoffset: function(e) {
+    var posx = 0;
+    var posy = 0;
+    if (!e) {
+      e = window.event;
+    }
+    if (e.type == "MSPointerMove" || e.type == "MSPointerDown" || e.type == "MSPointerUp") {
+      return {
+        x: e.pageX + window.pageXOffset,
+        y: e.pageY + window.pageYOffset
+      }
+    }
+    if (e.pageX || e.pageY) {
+      // Good browsers
+      return {
+        x: e.pageX,
+        y: e.pageY
+      };
+    } else if (e.clientX || e.clientY) {
+      // Internet Explorer
+      return {
+        x: e.clientX,
+        y: e.clientY
+      };
+    } else if (e.touches && e.touches.length === 1) {
+      // Touch browsers
+      return {
+        x: e.touches[0].pageX,
+        y: e.touches[0].pageY
+      };
+    }
+  },
+
+  // Ripped from underscore.js
+  // Internal function used to implement `_.throttle` and `_.debounce`.
+  limit: function(func, wait, debounce) {
+    var timeout;
+    return function() {
+      var context = this,
+        args = arguments;
+      var throttler = function() {
+        timeout = null;
+        func.apply(context, args);
+      };
+      if (debounce) clearTimeout(timeout);
+      if (debounce || !timeout) timeout = setTimeout(throttler, wait);
+    };
+  },
+
+  // Returns a function, that, when invoked, will only be triggered at most once
+  // during a given window of time.
+  throttle: function(func, wait) {
+    return this.limit(func, wait, false);
+  },
+
+  sanitize: function(content) {
+    if (!content) return '';
+
+    function urlX(url) {
+      // Data URIs are subject to a bug in Firefox
+      // https://bugzilla.mozilla.org/show_bug.cgi?id=255107
+      // which let them be a vector. But WebKit does 'the right thing'
+      // or at least 'something' about this situation, so we'll tolerate
+      // them.
+      if (/^(https?:\/\/|data:image)/.test(url)) {
+        return url;
+      }
+    }
+
+    function idX(id) {
+      return id;
+    }
+
+    return html_sanitize(content, urlX, idX);
+  }
 };
 wax = wax || {};
 wax.leaf = wax.leaf || {};
 
 wax.leaf.hash = function(map) {
-    return wax.hash({
-        getCenterZoom: function () {
-            var center = map.getCenter(),
-                zoom = map.getZoom(),
-                precision = Math.max(
-                    0,
-                    Math.ceil(Math.log(zoom) / Math.LN2));
+  return wax.hash({
+    getCenterZoom: function() {
+      var center = map.getCenter(),
+        zoom = map.getZoom(),
+        precision = Math.max(
+          0,
+          Math.ceil(Math.log(zoom) / Math.LN2));
 
-            return [
-                zoom,
-                center.lat.toFixed(precision),
-                center.lng.toFixed(precision)
-            ].join('/');
-        },
+      return [
+        zoom,
+        center.lat.toFixed(precision),
+        center.lng.toFixed(precision)
+      ].join('/');
+    },
 
-        setCenterZoom: function (args) {
-            map.setView(new L.LatLng(args[1], args[2]), args[0]);
-        },
+    setCenterZoom: function(args) {
+      map.setView(new L.LatLng(args[1], args[2]), args[0]);
+    },
 
-        bindChange: function (fn) {
-            map.on('moveend', fn);
-        },
+    bindChange: function(fn) {
+      map.on('moveend', fn);
+    },
 
-        unbindChange: function (fn) {
-            map.off('moveend', fn);
-        }
-    });
+    unbindChange: function(fn) {
+      map.off('moveend', fn);
+    }
+  });
 };
 wax = wax || {};
 wax.leaf = wax.leaf || {};
 
 wax.leaf.interaction = function() {
-    var dirty = false, _grid, map;
+  var dirty = false,
+    _grid, map;
 
-    function setdirty() { dirty = true; }
+  function setdirty() {
+    dirty = true;
+  }
 
-    function grid() {
-        // TODO: don't build for tiles outside of viewport
-        // Touch interaction leads to intermediate
-        //var zoomLayer = map.createOrGetLayer(Math.round(map.getZoom())); //?what is this doing?
-        // Calculate a tile grid and cache it, by using the `.tiles`
-        // element on this map.
-        if (!dirty && _grid) {
-            return _grid;
-        } else {
-            return (_grid = (function(layers) {
-                var o = [];
-                for (var layerId in layers) {
-                    // This only supports tiled layers
-                    if (layers[layerId]._tiles) {
-                        for (var tile in layers[layerId]._tiles) {
-                            var _tile = layers[layerId]._tiles[tile];
-                            // avoid adding tiles without src, grid url can't be found for them
-                            if(_tile.src) {
-                              var offset = wax.u.offset(_tile);
-                              o.push([offset.top, offset.left, _tile]);
-                            }
-                        }
-                    }
-                }
-                return o;
-            })(map._layers));
+  function grid() {
+    // TODO: don't build for tiles outside of viewport
+    // Touch interaction leads to intermediate
+    //var zoomLayer = map.createOrGetLayer(Math.round(map.getZoom())); //?what is this doing?
+    // Calculate a tile grid and cache it, by using the `.tiles`
+    // element on this map.
+    if (!dirty && _grid) {
+      return _grid;
+    } else {
+      return (_grid = (function(layers) {
+        var o = [];
+        for (var layerId in layers) {
+          // This only supports tiled layers
+          if (layers[layerId]._tiles) {
+            for (var tile in layers[layerId]._tiles) {
+              var _tile = layers[layerId]._tiles[tile];
+              // avoid adding tiles without src, grid url can't be found for them
+              if (_tile.src) {
+                var offset = wax.u.offset(_tile);
+                o.push([offset.top, offset.left, _tile]);
+              }
+            }
+          }
         }
+        return o;
+      })(map._layers));
     }
+  }
 
-    function attach(x) {
-        if (!arguments.length) return map;
-        map = x;
-        var l = ['moveend'];
-        for (var i = 0; i < l.length; i++) {
-            map.on(l[i], setdirty);
-        }
+  function attach(x) {
+    if (!arguments.length) return map;
+    map = x;
+    var l = ['moveend'];
+    for (var i = 0; i < l.length; i++) {
+      map.on(l[i], setdirty);
     }
+  }
 
-    function detach(x) {
-        if (!arguments.length) return map;
-        map = x;
-        var l = ['moveend'];
-        for (var i = 0; i < l.length; i++) {
-            map.off(l[i], setdirty);
-        }
+  function detach(x) {
+    if (!arguments.length) return map;
+    map = x;
+    var l = ['moveend'];
+    for (var i = 0; i < l.length; i++) {
+      map.off(l[i], setdirty);
     }
+  }
 
-    return wax.interaction()
-        .attach(attach)
-        .detach(detach)
-        .parent(function() {
-          return map._container;
-        })
-        .grid(grid);
+  return wax.interaction()
+    .attach(attach)
+    .detach(detach)
+    .parent(function() {
+      return map._container;
+    })
+    .grid(grid);
 };
 wax = wax || {};
 wax.leaf = wax.leaf || {};
 
 wax.leaf.connector = L.TileLayer.extend({
-    initialize: function(options) {
-        options = options || {};
-        options.minZoom = options.minzoom || 0;
-        options.maxZoom = options.maxzoom || 22;
-        L.TileLayer.prototype.initialize.call(this, options.tiles[0], options);
-    }
+  initialize: function(options) {
+    options = options || {};
+    options.minZoom = options.minzoom || 0;
+    options.maxZoom = options.maxzoom || 22;
+    L.TileLayer.prototype.initialize.call(this, options.tiles[0], options);
+  }
 });
 wax = wax || {};
 wax.g = wax.g || {};
@@ -3135,27 +3196,27 @@ wax.g = wax.g || {};
 // -----------
 // Attribution wrapper for Google Maps.
 wax.g.attribution = function(map, tilejson) {
-    tilejson = tilejson || {};
-    var a, // internal attribution control
-        attribution = {};
+  tilejson = tilejson || {};
+  var a, // internal attribution control
+    attribution = {};
 
-    attribution.element = function() {
-        return a.element();
-    };
+  attribution.element = function() {
+    return a.element();
+  };
 
-    attribution.appendTo = function(elem) {
-        wax.u.$(elem).appendChild(a.element());
-        return this;
-    };
+  attribution.appendTo = function(elem) {
+    wax.u.$(elem).appendChild(a.element());
+    return this;
+  };
 
-    attribution.init = function() {
-        a = wax.attribution();
-        a.content(tilejson.attribution);
-        a.element().className = 'map-attribution map-g';
-        return this;
-    };
+  attribution.init = function() {
+    a = wax.attribution();
+    a.content(tilejson.attribution);
+    a.element().className = 'map-attribution map-g';
+    return this;
+  };
 
-    return attribution.init();
+  return attribution.init();
 };
 wax = wax || {};
 wax.g = wax.g || {};
@@ -3163,127 +3224,130 @@ wax.g = wax.g || {};
 // Bandwidth Detection
 // ------------------
 wax.g.bwdetect = function(map, options) {
-    options = options || {};
-    var lowpng = options.png || '.png128',
-        lowjpg = options.jpg || '.jpg70';
+  options = options || {};
+  var lowpng = options.png || '.png128',
+    lowjpg = options.jpg || '.jpg70';
 
-    // Create a low-bandwidth map type.
-    if (!map.mapTypes['mb-low']) {
-        var mb = map.mapTypes.mb;
-        var tilejson = {
-            tiles: [],
-            scheme: mb.options.scheme,
-            blankImage: mb.options.blankImage,
-            minzoom: mb.minZoom,
-            maxzoom: mb.maxZoom,
-            name: mb.name,
-            description: mb.description
-        };
-        for (var i = 0; i < mb.options.tiles.length; i++) {
-            tilejson.tiles.push(mb.options.tiles[i]
-                .replace('.png', lowpng)
-                .replace('.jpg', lowjpg));
-        }
-        m.mapTypes.set('mb-low', new wax.g.connector(tilejson));
+  // Create a low-bandwidth map type.
+  if (!map.mapTypes['mb-low']) {
+    var mb = map.mapTypes.mb;
+    var tilejson = {
+      tiles: [],
+      scheme: mb.options.scheme,
+      blankImage: mb.options.blankImage,
+      minzoom: mb.minZoom,
+      maxzoom: mb.maxZoom,
+      name: mb.name,
+      description: mb.description
+    };
+    for (var i = 0; i < mb.options.tiles.length; i++) {
+      tilejson.tiles.push(mb.options.tiles[i]
+        .replace('.png', lowpng)
+        .replace('.jpg', lowjpg));
     }
+    m.mapTypes.set('mb-low', new wax.g.connector(tilejson));
+  }
 
-    return wax.bwdetect(options, function(bw) {
-      map.setMapTypeId(bw ? 'mb' : 'mb-low');
-    });
+  return wax.bwdetect(options, function(bw) {
+    map.setMapTypeId(bw ? 'mb' : 'mb-low');
+  });
 };
 wax = wax || {};
 wax.g = wax.g || {};
 
 wax.g.hash = function(map) {
-    return wax.hash({
-        getCenterZoom: function() {
-            var center = map.getCenter(),
-                zoom = map.getZoom(),
-                precision = Math.max(
-                    0,
-                    Math.ceil(Math.log(zoom) / Math.LN2));
-            return [zoom.toFixed(2),
-                center.lat().toFixed(precision),
-                center.lng().toFixed(precision)
-            ].join('/');
-        },
-        setCenterZoom: function setCenterZoom(args) {
-            map.setCenter(new google.maps.LatLng(args[1], args[2]));
-            map.setZoom(args[0]);
-        },
-        bindChange: function(fn) {
-            google.maps.event.addListener(map, 'idle', fn);
-        },
-        unbindChange: function(fn) {
-            google.maps.event.removeListener(map, 'idle', fn);
-        }
-    });
+  return wax.hash({
+    getCenterZoom: function() {
+      var center = map.getCenter(),
+        zoom = map.getZoom(),
+        precision = Math.max(
+          0,
+          Math.ceil(Math.log(zoom) / Math.LN2));
+      return [zoom.toFixed(2),
+        center.lat().toFixed(precision),
+        center.lng().toFixed(precision)
+      ].join('/');
+    },
+    setCenterZoom: function setCenterZoom(args) {
+      map.setCenter(new google.maps.LatLng(args[1], args[2]));
+      map.setZoom(args[0]);
+    },
+    bindChange: function(fn) {
+      google.maps.event.addListener(map, 'idle', fn);
+    },
+    unbindChange: function(fn) {
+      google.maps.event.removeListener(map, 'idle', fn);
+    }
+  });
 };
 wax = wax || {};
 wax.g = wax.g || {};
 
 wax.g.interaction = function() {
-    var dirty = false, _grid, map, interactionEnabled = false;
-    var tileloadListener = null,
-        idleListener = null;
+  var dirty = false,
+    _grid, map, interactionEnabled = false;
+  var tileloadListener = null,
+    idleListener = null;
 
-    function setdirty() { dirty = true; }
+  function setdirty() {
+    dirty = true;
+  }
 
-    function grid() {
+  function grid() {
 
-        // when interaction is enabled there should be grid tiles
-        if (!dirty && _grid && (_grid.length > 0 || !interactionEnabled)) {
-            return _grid;
-        } else {
-            _grid = [];
-            var zoom = map.getZoom();
-            var mapOffset = wax.u.offset(map.getDiv());
-            var get = function(mapType) {
-                if (!mapType || !mapType.interactive) return;
-                interactionEnabled = true;
-                for (var key in mapType.cache) {
-                    if (key.split('/')[0] != zoom) continue;
-                    var tileOffset = wax.u.offset(mapType.cache[key]);
-                    _grid.push([
-                        tileOffset.top,
-                        tileOffset.left,
-                        mapType.cache[key]
-                    ]);
-                }
-            };
-            // Iterate over base mapTypes and overlayMapTypes.
-            for (var i in map.mapTypes) get(map.mapTypes[i]);
-            map.overlayMapTypes.forEach(get);
+    // when interaction is enabled there should be grid tiles
+    if (!dirty && _grid && (_grid.length > 0 || !interactionEnabled)) {
+      return _grid;
+    } else {
+      _grid = [];
+      var zoom = map.getZoom();
+      var mapOffset = wax.u.offset(map.getDiv());
+      var get = function(mapType) {
+        if (!mapType || !mapType.interactive) return;
+        interactionEnabled = true;
+        for (var key in mapType.cache) {
+          if (key.split('/')[0] != zoom) continue;
+          var tileOffset = wax.u.offset(mapType.cache[key]);
+          _grid.push([
+            tileOffset.top,
+            tileOffset.left,
+            mapType.cache[key]
+          ]);
         }
-        return _grid;
+      };
+      // Iterate over base mapTypes and overlayMapTypes.
+      for (var i in map.mapTypes) get(map.mapTypes[i]);
+      map.overlayMapTypes.forEach(get);
     }
+    return _grid;
+  }
 
-    function attach(x) {
-        if (!arguments.length) return map;
-        map = x;
-        tileloadListener = google.maps.event.addListener(map, 'tileloaded',
-            setdirty);
-        idleListener = google.maps.event.addListener(map, 'idle',
-            setdirty);
-    }
+  function attach(x) {
+    if (!arguments.length) return map;
+    map = x;
+    tileloadListener = google.maps.event.addListener(map, 'tileloaded',
+      setdirty);
+    idleListener = google.maps.event.addListener(map, 'idle',
+      setdirty);
+  }
 
-    function detach(x) {
-        if(tileloadListener)
-          google.maps.event.removeListener(tileloadListener);
-        if(idleListener)
-          google.maps.event.removeListener(idleListener);
-    }
+  function detach(x) {
+    if (tileloadListener)
+      google.maps.event.removeListener(tileloadListener);
+    if (idleListener)
+      google.maps.event.removeListener(idleListener);
+  }
 
 
 
-    return wax.interaction()
-        .attach(attach)
-        .detach(detach)
-        .discardTouchMove(true)
-        .parent(function() {
-          return map.getDiv();
-        })
-        .grid(grid);
+  return wax.interaction()
+    .attach(attach)
+    .detach(detach)
+    .discardTouchMove(true)
+    .parent(function() {
+      return map.getDiv();
+    })
+    .grid(grid);
 };
 // Wax for Google Maps API v3
 // --------------------------
@@ -3303,68 +3367,71 @@ wax.g = wax.g || {};
 //       baseUrl: 'a url',
 //     }
 wax.g.connector = function(options) {
-    options = options || {};
+  options = options || {};
 
-    this.options = {
-        tiles: options.tiles,
-        scheme: options.scheme || 'xyz',
-        blankImage: options.blankImage || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
-    };
+  this.options = {
+    tiles: options.tiles,
+    scheme: options.scheme || 'xyz',
+    blankImage: options.blankImage || 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs='
+  };
 
-    this.opacity = options.opacity || 0;
-    this.minZoom = options.minzoom || 0;
-    this.maxZoom = options.maxzoom || 22;
+  this.opacity = options.opacity || 0;
+  this.minZoom = options.minzoom || 0;
+  this.maxZoom = options.maxzoom || 22;
 
-    this.name = options.name || '';
-    this.description = options.description || '';
+  this.name = options.name || '';
+  this.description = options.description || '';
 
-    // non-configurable options
-    this.interactive = true;
-    this.tileSize = new google.maps.Size(256, 256);
+  // non-configurable options
+  this.interactive = true;
+  this.tileSize = new google.maps.Size(256, 256);
 
-    // DOM element cache
-    this.cache = {};
+  // DOM element cache
+  this.cache = {};
 };
 
 // Get a tile element from a coordinate, zoom level, and an ownerDocument.
 wax.g.connector.prototype.getTile = function(coord, zoom, ownerDocument) {
-    var key = zoom + '/' + coord.x + '/' + coord.y;
-    if (!this.cache[key]) {
-        var img = this.cache[key] = new Image(256, 256);
-        this.cache[key].src = this.getTileUrl(coord, zoom);
-        this.cache[key].setAttribute('gTileKey', key);
-        this.cache[key].setAttribute("style","opacity: "+this.opacity+"; filter: alpha(opacity="+(this.opacity*100)+");");
-        this.cache[key].onerror = function() { img.style.display = 'none'; };
-    }
-    return this.cache[key];
+  var key = zoom + '/' + coord.x + '/' + coord.y;
+  if (!this.cache[key]) {
+    var img = this.cache[key] = new Image(256, 256);
+    this.cache[key].src = this.getTileUrl(coord, zoom);
+    this.cache[key].setAttribute('gTileKey', key);
+    this.cache[key].setAttribute("style", "opacity: " + this.opacity + "; filter: alpha(opacity=" + (this.opacity * 100) + ");");
+    this.cache[key].onerror = function() {
+      img.style.display = 'none';
+    };
+  }
+  return this.cache[key];
 };
 
 // Remove a tile that has fallen out of the map's viewport.
 //
 // TODO: expire cache data in the gridmanager.
 wax.g.connector.prototype.releaseTile = function(tile) {
-    var key = tile.getAttribute('gTileKey');
-    if (this.cache[key]) delete this.cache[key];
-    if (tile.parentNode) tile.parentNode.removeChild(tile);
+  var key = tile.getAttribute('gTileKey');
+  if (this.cache[key]) delete this.cache[key];
+  if (tile.parentNode) tile.parentNode.removeChild(tile);
 };
 
 // Get a tile url, based on x, y coordinates and a z value.
 wax.g.connector.prototype.getTileUrl = function(coord, z) {
-    // Y coordinate is flipped in Mapbox, compared to Google
-    var mod = Math.pow(2, z),
-        y = (this.options.scheme === 'tms') ?
-            (mod - 1) - coord.y :
-            coord.y,
-        x = (coord.x % mod);
+  // Y coordinate is flipped in Mapbox, compared to Google
+  var mod = Math.pow(2, z),
+    y = (this.options.scheme === 'tms') ?
+    (mod - 1) - coord.y :
+    coord.y,
+    x = (coord.x % mod);
 
-    x = (x < 0) ? (coord.x % mod) + mod : x;
+  x = (x < 0) ? (coord.x % mod) + mod : x;
 
-    if (y < 0) return this.options.blankImage;
+  if (y < 0) return this.options.blankImage;
 
-    return this.options.tiles
-        [parseInt(x + y, 10) %
-            this.options.tiles.length]
-                .replace(/\{z\}/g, z)
-                .replace(/\{x\}/g, x)
-                .replace(/\{y\}/g, y);
+  return this.options.tiles[parseInt(x + y, 10) %
+      this.options.tiles.length]
+    .replace(/\{z\}/g, z)
+    .replace(/\{x\}/g, x)
+    .replace(/\{y\}/g, y);
 };
+
+module.exports = wax

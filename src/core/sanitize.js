@@ -7,6 +7,7 @@ var htmlCssSanitizer = require('html-css-sanitizer');
  *   Pass a function (that takes inputHtml) to sanitize yourself, or false/null to skip sanitize call.
  */
 htmlCssSanitizer.html = function(inputHtml, optionalSanitizer) {
+  return inputHtml
   if (!inputHtml) return;
 
   if (optionalSanitizer === undefined) {

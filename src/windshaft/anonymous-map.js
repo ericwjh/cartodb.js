@@ -59,6 +59,7 @@ var AnonymousMap = MapBase.extend({
   _calculateDataviewsSection: function () {
     return this._dataviewsCollection.reduce(function (dataviews, dataviewModel) {
       dataviews[dataviewModel.get('id')] = dataviewModel.toJSON();
+      dataviews[dataviewModel.get('id')].table = dataviewModel.get('table')
       return dataviews;
     }, {});
   },
